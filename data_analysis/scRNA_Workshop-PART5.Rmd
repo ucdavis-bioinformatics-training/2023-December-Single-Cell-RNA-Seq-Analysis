@@ -1,0 +1,186 @@
+---
+title: "Single Cell RNAseq Part 5"
+author: "Bioinformatics Core"
+output:
+    html_document:
+      keep_md: TRUE
+---
+
+# Part 5: Enrichment, Model-Based DE, and Cell-Type Identification
+
+```{r setup_opt, warning=FALSE,error=FALSE,message=FALSE, echo = F}
+options(width = 450)
+```
+
+## Load libraries
+```{r load_library, warning=FALSE,error=FALSE,message=FALSE}
+library(Seurat)
+library(limma)
+library(topGO)
+library(HGNChelper)
+library(dplyr)
+```
+
+## Load the Seurat object
+```{r load_rdata, warning=FALSE,error=FALSE,message=FALSE}
+experiment.merged <- readRDS("scRNA_workshop_4.rds")
+experiment.merged
+Idents(experiment.merged) <- "finalcluster"
+```
+
+# 1. Gene Ontology (GO) Enrichment of Genes Expressed in a Cluster
+[Gene Ontology](http://geneontology.org/docs/ontology-documentation/) provides a controlled vocabulary for describing gene products.  Here we use enrichment analysis to identify GO terms that are overrepresented among the gene expressed in cells in a given cluster. 
+
+```{r GO, warning=FALSE,error=FALSE,message=FALSE}
+cluster10 <- subset(experiment.merged, idents = '10')
+expr <- as.matrix(GetAssayData(cluster10))
+
+# Select genes that are expressed > 0 in at least half of cells
+n.gt.0 <- apply(expr, 1, function(x)length(which(x > 0)))
+expressed.genes <- rownames(expr)[which(n.gt.0/ncol(expr) >= 0.5)]
+all.genes <- rownames(expr)
+
+# define geneList as 1 if gene is in expressed.genes, 0 otherwise
+geneList <- ifelse(all.genes %in% expressed.genes, 1, 0)
+names(geneList) <- all.genes
+
+# Create topGOdata object
+	GOdata <- new("topGOdata",
+		ontology = "BP", # use biological process ontology
+		allGenes = geneList,
+		geneSelectionFun = function(x)(x == 1),
+              annot = annFUN.org, mapping = "org.Hs.eg.db", ID = "symbol")
+# Test for enrichment using Fisher's Exact Test
+	resultFisher <- runTest(GOdata, algorithm = "elim", statistic = "fisher")
+	GenTable(GOdata, Fisher = resultFisher, topNodes = 20, numChar = 60)
+```
+* Annotated: number of genes (out of all.genes) that are annotated with that GO term
+* Significant: number of genes that are annotated with that GO term and meet our criteria for "expressed"
+* Expected: Under random chance, number of genes that would be expected to be annotated with that GO term and meeting our criteria for "expressed"
+* Fisher: (Raw) p-value from Fisher's Exact Test
+
+# 2. Model-based DE analysis in limma
+[limma](https://bioconductor.org/packages/release/bioc/html/limma.html) is an R package for differential expression analysis of bulk RNASeq and microarray data.  We apply it here to single cell data.
+
+Limma can be used to fit any linear model to expression data and is useful for analyses that go beyond two-group comparisons.  A detailed tutorial of model specification in limma is available [here](https://ucdavis-bioinformatics-training.github.io/2021-June-RNA-Seq-Analysis/data_analysis/DE_Analysis_mm_with_quizzes) and in the [limma User's Guide](https://www.bioconductor.org/packages/devel/bioc/vignettes/limma/inst/doc/usersguide.pdf).
+
+```{r}
+# filter genes to those expressed in at least 10% of cells
+keep <- rownames(expr)[which(n.gt.0/ncol(expr) >= 0.1)]
+expr2 <- expr[keep,]
+
+# Set up "design matrix" with statistical model
+cluster10$proper.ident <- make.names(cluster10$orig.ident)
+mm <- model.matrix(~0 + proper.ident + S.Score + G2M.Score + percent_MT + nFeature_RNA, data = cluster10[[]])
+head(mm)
+tail(mm)
+
+# Fit model in limma
+fit <- lmFit(expr2, mm)
+head(coef(fit))
+
+# Test 'B001-A-301' - 'A001-C-007'
+contr <- makeContrasts(proper.identB001.A.301 - proper.identA001.C.007, levels = colnames(coef(fit)))
+contr
+fit2 <- contrasts.fit(fit, contrasts = contr)
+fit2 <- eBayes(fit2)
+out <- topTable(fit2, n = Inf, sort.by = "P")
+head(out, 30)
+```
+
+### Output columns:
+* logFC: log fold change (since we are working with Seurat's natural log transformed data, will be natural log fold change)
+* AveExpr: Average expression across all cells in expr2
+* t: logFC divided by its standard error
+* P.Value: Raw p-value (based on t) from test that logFC differs from 0
+* adj.P.Val: Benjamini-Hochberg false discovery rate adjusted p-value
+* B: log-odds that gene is DE 
+
+# Cell type identification with ScType
+[ScType](https://www.nature.com/articles/s41467-022-28803-w) assigns our clusters from Seurat to a cell type based on a hierarchical external database.
+
+The database supplied with the package is human but users can supply their own data.  
+
+More details are available on [Github](https://github.com/IanevskiAleksandr/sc-type):
+
+Source ScType functions from Github:
+```{r}
+# load gene set preparation function
+source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/gene_sets_prepare.R")
+# load cell type annotation function
+source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/sctype_score_.R")
+```
+
+Read in marker database:
+```{r, warning = FALSE}
+# DB file
+db_ = "https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/ScTypeDB_full.xlsx";
+tissue = "Intestine" # e.g. Immune system,Pancreas,Liver,Eye,Kidney,Brain,Lung,Adrenal,Heart,Intestine,Muscle,Placenta,Spleen,Stomach,Thymus 
+
+# prepare gene sets
+gs_list = gene_sets_prepare(db_, tissue)
+```
+
+Let's take a look at the structure of the marker database:
+```{r}
+head(gs_list)
+```
+
+Let's add a cell type and associated markers (markers from https://panglaodb.se/markers.html?cell_type=%27Tuft%20cells%27#google_vignette):
+```{r}
+gs_list$gs_positive$`Tuft cells` <- c("SUCNR1", "FABP1", "POU2F3", "SIGLECF", "CDHR2", "AVIL", "ESPN", "LRMP", "TRPM5", "DCLK1", "TAS1R3", "SOX9", "TUBB5", "CAMK2B", "GNAT3", "IL25", "PLCB2", "GFI1B", "ATOH1", "CD24A", "ASIC5", "KLF3", "KLF6", "DRD3", "NRADD", "GNG13", "NREP", "RGS2", "RAC2", "PTGS1", "IRF7", "FFAR3", "ALOX5", "TSLP", "IL4RA", "IL13RA1", "IL17RB", "PTPRC")
+gs_list$gs_negative$`Tuft cells` <- NULL
+```
+
+```{r}
+# get cell-type by cell matrix
+scale.data <- GetAssayData(experiment.merged, "scale")
+es.max = sctype_score(scRNAseqData = scale.data, scaled = TRUE, 
+                      gs = gs_list$gs_positive, gs2 = gs_list$gs_negative) 
+# cell type scores for first cell
+es.max[,1]
+```
+
+We will derive a cluster-level score by summing the cell level scores within each cluster
+```{r}
+tmp <- lapply(sort(unique(experiment.merged$finalcluster)), function(cl, nkeep = 3){
+  es.max.cl <- sort(rowSums(es.max[, experiment.merged$finalcluster == cl]), decreasing = TRUE)
+  out <- head(data.frame(finalcluster = cl, ScType = names(es.max.cl), scores = es.max.cl, ncells = sum(experiment.merged$finalcluster == cl)), nkeep)
+  out$rank <- 1:nkeep
+  return(out)
+})
+cL_results.top <- do.call("rbind", tmp)
+cL_results.top1 <- subset(cL_results.top, rank == 1)
+```
+
+Merge ScType cluster-level results with Seurat object
+```{r}
+tmp <- data.frame(cell = colnames(experiment.merged), finalcluster = experiment.merged$finalcluster)
+tmp <- left_join(tmp, cL_results.top1, by = "finalcluster")
+experiment.merged$ScType <- tmp$ScType
+```
+
+```{r}
+DimPlot(experiment.merged, group.by = "ScType")
+```
+
+The ScType developer suggests that assignments with a score less than (number of cells in cluster)/4 are low confidence and should be set to unknown:
+```{r}
+tmp <- data.frame(cell = colnames(experiment.merged), finalcluster = experiment.merged$finalcluster)
+tmp <- left_join(tmp, cL_results.top1, by = "finalcluster")
+# set assignments with scores less than ncells/4 to unknown
+tmp$ScType.filtered <- ifelse(tmp$scores < tmp$ncells/4, "Unknown", tmp$ScType)
+experiment.merged$ScType.filtered <- tmp$ScType.filtered
+DimPlot(experiment.merged, group.by = "ScType.filtered")
+```
+
+## Get the next Rmd file
+```{r getnextfile, eval=TRUE}
+download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2022-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/scRNA_Workshop-PART6.Rmd", "scRNA_Workshop-PART6.Rmd")
+```
+
+                 
+## Session Information
+```{r session_info, warning=FALSE,error=FALSE,message=FALSE}
+sessionInfo()
+```

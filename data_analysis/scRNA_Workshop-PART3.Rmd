@@ -1,0 +1,142 @@
+---
+title: "Introduction to Single Cell RNAseq Part 3"
+author: "UCD Bioinformatics Core"
+output:
+    html_document:
+      keep_md: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+Last Updated: June 19, 2023
+
+# Part 3: PCA and choice in number of PCS
+
+## Setup
+
+First, load the required R libraries.
+```{r libraries}
+library(Seurat)
+library(knitr)
+library(ggplot2)
+```
+
+Next, read in the saved Seurat object from the previous section.
+```{r readRDS}
+experiment.aggregate <- readRDS(file="scRNA_workshop_2.rds")
+experiment.aggregate
+```
+
+Set a seed for any pseudo-random functions.
+```{r seed}
+set.seed(12345)
+```
+
+## Scale the data
+
+The `ScaleData` function scales and centers genes in the dataset. If variables are provided with the "vars.to.regress" argument, they are individually regressed against each gene, and the resulting residuals are then scaled and centered unless otherwise specified. We regress out cell cycle results S.Score and G2M.Score, mitochondrial RNA level (percent_MT), and the number of features (nFeature_RNA) as a proxy for sequencing depth.
+
+```{r ScaleData}
+experiment.aggregate <- ScaleData(experiment.aggregate,
+                                  vars.to.regress = c("S.Score", "G2M.Score", "percent_MT", "nFeature_RNA"))
+```
+
+## Perform dimensionality reduction with PCA
+
+Next we perform PCA (principal components analysis) on the scaled data.  
+
+```{r pca_help, eval=FALSE}
+?RunPCA
+```
+
+```{r pca}
+experiment.aggregate <- RunPCA(experiment.aggregate, npcs = 100)
+```
+
+Seurat provides a number of ways to visualize the PCA results.
+
+### PCA loadings
+
+The top genes associated with the reduction component are plotted for the selected dimension.
+
+```{r viz_pca}
+VizDimLoadings(experiment.aggregate, dims = 1, ncol = 1) + theme_minimal(base_size = 8)
+VizDimLoadings(experiment.aggregate, dims = 2, ncol = 1) + theme_minimal(base_size = 8)
+```
+
+### Principal components plot
+
+A scatter plot showing the placement of each cell on two selected components, by default, the first and second.
+
+```{r plot_pca}
+DimPlot(experiment.aggregate,
+        reduction = "pca",
+        shuffle = TRUE) +
+  scale_color_viridis_d(option = "mako")
+```
+
+### Heat map
+
+Heat maps can be drawn for each component. Both cells and genes are sorted by their principal component scores. This allows for nice visualization of sources of heterogeneity in the dataset.
+
+```{r heatmap_pca}
+DimHeatmap(experiment.aggregate, dims = 1:6, cells = 500, balanced = TRUE)
+DimHeatmap(experiment.aggregate, dims = 7:12, cells = 500, balanced = TRUE)
+```
+
+#### Explore
+
+Re-import the original data and try modifying the ScaleData vars.to.regress argument. You could remove some variables, or add others. What happens? See how choices effect the plots.
+
+```{r explore, eval=FALSE}
+experiment.explore <- readRDS("scRNA_workshop_2.rds")
+experiment.explore <- ScaleData(experiment.explore) # make changes here to explore the data
+experiment.explore <- RunPCA(experiment.explore) # what happens if you adjust npcs?
+VizDimLoadings(experiment.explore, dims = 1:2)
+DimPlot(experiment.explore, reduction = "pca")
+DimHeatmap(experiment.explore, dims = 1:6, cells = 500, balanced = TRUE) # adjust parameters
+rm(experiment.explore)
+```
+
+## Selecting PCs to use
+
+To overcome the extensive technical noise in any single gene, Seurat clusters cells based on their PCA scores, with each PC essentially representing a metagene that combines information across a correlated gene set. Determining how many PCs to include downstream is therefore an important step.
+
+### Elbow plot
+
+An elbow plot displays the standard deviations (or approximate singular values if running PCAFast) of the principle components for easy identification of an elbow in the graph. This elbow often corresponds well with the significant PCs and is much faster to run.  This is the traditional approach to selecting principal components.
+
+The appearance of elbow plots tends to be highly consistent across single cell / single nucleus experiments. Generally, the line approaches zero at around PC 50. This is a reasonable number of PCs to use for the downstream steps.
+
+```{r elbow}
+ElbowPlot(experiment.aggregate, ndims = 100)
+```
+
+### JackStraw
+
+The JackStraw function randomly permutes a subset of data, and calculates projected PCA scores for these genes. The PCA scores for these randomly permuted genes are then compared with the observed PCA scores to determine statistical significance. The end result is a p-value for each gene's association with each principal component.
+
+PCs with a strong enrichment of low p-value genes are identified as significant components.
+
+**The JackStraw permutation is computationally intensive and can be quite slow. Consider skipping this step and exploring the function when you have some extra time.**
+
+```{r jackstraw, eval=FALSE}
+experiment.aggregate <- JackStraw(experiment.aggregate, dims = 100)
+experiment.aggregate <- ScoreJackStraw(experiment.aggregate, dims = 1:100)
+JackStrawPlot(object = experiment.aggregate, dims = 1:100) +
+  scale_color_viridis_d() +
+  theme(legend.position="bottom")
+```
+
+## Save the Seurat object and download the next Rmd file
+```{r saveRDS}
+saveRDS(experiment.aggregate, file="scRNA_workshop_3.rds")
+download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-June-Single-Cell-RNA-Seq-Analysis/main/data_analysis/scRNA_Workshop-PART4.Rmd", "scRNA_Workshop-PART4.Rmd")
+```
+
+## Session Information
+```{r session_info}
+sessionInfo()
+```

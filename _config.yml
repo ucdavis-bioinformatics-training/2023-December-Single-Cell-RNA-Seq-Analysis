@@ -1,0 +1,75 @@
+theme: jekyll-theme-minimal
+title: 'Single Cell RNA-Seq Analysis'
+show_downloads: True
+google_analytics: True
+navigation:
+  - title: Home
+    url: /
+
+  - heading: Introduction and Lectures
+  - title: Intro to the Workshop and Core
+    url: base/welcome
+  - title: Schedule
+    url: base/schedule
+  - title: What is Bioinformatics/Genomics?
+    url: https://raw.githubusercontent.com/ucdavis-bioinformatics-training/ucdavis-bioinformatics-training.presentations/master/genomics/Genomics_a_perspective_Dec_2021.pdf
+  - title: Experimental Design and Cost Estimation
+    url: https://raw.githubusercontent.com/ucdavis-bioinformatics-training/ucdavis-bioinformatics-training.presentations/master/singlecell/scRNAseq-expDesign_Oct_2022.pdf
+
+  - heading: Support
+  - title: Slack
+    url: base/slack
+  - title: Zoom
+    url: base/zoom
+  - title: Cheat Sheets
+    url: base/cheatSheetIndex
+  - title: Software and Links
+    url: software_scripts/software
+  - title: Scripts
+    url: software_scripts/scripts_links
+
+  - heading: Prerequisites
+  - title: CLI
+    url: base/cli_prerequisites
+  - title: R
+    url: base/r_prerequisites
+
+  - heading: Data Reduction
+  - title: Files and Filetypes
+    url: data_reduction/filetypes
+  - title: Project setup
+    url: data_reduction/project_setup
+  - title: Generating Expression Matrix
+    url: data_reduction/Expression_Matrix
+
+  - heading: scRNAseq Analysis
+  - title: Prepare scRNAseq Analysis
+    url: data_analysis/scrna_analysis_prepare
+  - title: scRNAseq Analysis - PART1
+    url: data_analysis/scRNA_Workshop-PART1_fixed
+  - title: scRNAseq Analysis - PART2
+    url: data_analysis/scRNA_Workshop-PART2_fixed
+  - title: scRNAseq Analysis - PART3
+    url: data_analysis/scRNA_Workshop-PART3_fixed
+  - title: scRNAseq Analysis - PART4
+    url: data_analysis/scRNA_Workshop-PART4_fixed
+  - title: scRNAseq Analysis - PART5
+    url: data_analysis/scRNA_Workshop-PART5_with_quizzes
+  - title: scRNAseq Analysis - PART6
+    url: data_analysis/scRNA_Workshop-PART6
+  - title: scRNAseq Analysis - PART7
+    url: data_analysis/scRNA_Workshop-PART7
+  # - title: Shiny App (extra)
+  #   url: data_analysis/shiny_app_install
+  # - title: Shiny App on AWS (extra)
+  #   url: data_analysis/shiny_on_aws
+
+  - heading: ETC
+  - title: Closing thoughts
+    url: base/closing
+  - title: Workshop Photos
+    url: photos/photos
+  - title: Github page
+    url: https://github.com/ucdavis-bioinformatics-training/2022-July-Single-Cell-RNA-Seq-Analysis
+  - title: Biocore website
+    url: http://bioinformatics.ucdavis.edu

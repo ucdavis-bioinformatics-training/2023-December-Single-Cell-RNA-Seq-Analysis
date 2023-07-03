@@ -1,0 +1,384 @@
+---
+title: "Introduction to Single Cell RNAseq Part 2"
+author: "UCD Bioinformatics Core"
+output:
+    html_document:
+      keep_md: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+Last Updated: June 19, 2023
+
+# Part 2: QA/QC, filtering, and normalization
+
+In this workshop, we are using the filtered feature barcode matrix. While this lowers the likelihood of encountering barcodes that are not cell-associated within our expression matrix, it is still good practice to perform quality assurance / control on the experiment.
+
+## Setup
+
+First, we need to load the required libraries.
+
+```{r libraries}
+library(Seurat)
+library(biomaRt)
+library(ggplot2)
+library(knitr)
+library(kableExtra)
+library(reshape2)
+```
+
+If you are continuing directly from part 1, the experiment.aggregate object is likely already in your workspace. In case you cleared your workspace at the end of the previous section, or are working on this project at a later date, after quitting and re-starting R, you can use the `readRDS` function to read your saved Seurat object from part 1.
+
+```{r readRDS}
+experiment.aggregate <- readRDS("scRNA_workshop_1.rds")
+experiment.aggregate
+```
+
+The seed is used to initialize pseudo-random functions. Some of the functions we will be using have pseudo-random elements. Setting a common seed ensures that all of us will get the same results, and that the results will remain stable when re-run.
+
+```{r seed}
+set.seed(12345)
+```
+
+## Display metadata by quantile
+
+Using a few nested functions, we can produce prettier, more detailed, versions of the simple exploratory summary statistics we generated for the available metadata in the last section. In the code below, 5% quantile tables are produced for each metadata value, separated by sample identity.
+
+**Genes per cell**
+```{r quantiles_1, warning=FALSE,error=FALSE,message=FALSE}
+kable(do.call("cbind", tapply(experiment.aggregate$nFeature_RNA, 
+                      Idents(experiment.aggregate),quantile,probs=seq(0,1,0.05))),
+      caption = "5% Quantiles of Genes/Cell by Sample") %>% kable_styling()
+```
+
+**UMIs per cell**
+```{r quantiles_2, warning=FALSE,error=FALSE,message=FALSE}
+kable(do.call("cbind", tapply(experiment.aggregate$nCount_RNA, 
+                                      Idents(experiment.aggregate),quantile,probs=seq(0,1,0.05))),
+      caption = "5% Quantiles of UMI/Cell by Sample") %>% kable_styling()
+```
+
+**Mitochondrial percentage per cell**
+```{r quantiles_3, warning=FALSE,error=FALSE,message=FALSE}
+kable(round(do.call("cbind", tapply(experiment.aggregate$percent_MT, Idents(experiment.aggregate),quantile,probs=seq(0,1,0.05))), digits = 3),
+      caption = "5% Quantiles of Percent Mitochondrial by Sample") %>% kable_styling()
+```
+
+## Visualize distribution of metadata values
+Seurat has a number of convenient built-in functions for visualizing metadata. These functions produce ggplot objects, which can easily be modified using ggplot2. Of course, all of these visualizations can be reproduced with custom code as well, and we will include some examples of both modifying Seurat plots and generating plots from scratch as the analysis continues.
+
+### Violin plots
+
+The `VlnPlot` function produces a composite plot with one panel for each element of the "features" vector. The data are grouped by the provided identity; by default, this is the active identity of the object, which can be accessed using the `Idents()` function, or in the "active.ident" slot.
+
+```{r violins, fig.height=12}
+VlnPlot(experiment.aggregate,
+        features = c("nFeature_RNA", "nCount_RNA","percent_MT"),
+        ncol = 1,
+        pt.size = 0.3)
+```
+
+#### Modifying Seurat plots
+Modifying the ggplot objects produced by a Seurat plotting function works best on individual panels. Therefore, to recreate the function above with modifications, we can use `lapply` to create a list of plots. In some cases it may be more appropriate to create the plots individually so that different modifications can be applied to each plot.
+
+```{r violins_list}
+lapply(c("nFeature_RNA", "nCount_RNA","percent_MT"), function(feature){
+  VlnPlot(experiment.aggregate,
+          features = feature,
+          pt.size = 0.01) +
+    scale_fill_viridis_d(option = "mako") # default colors are not colorblind-friendly
+})
+VlnPlot(experiment.aggregate, features = "nCount_RNA", pt.size = 0.01) + 
+  scale_y_continuous(trans = "log10") +
+  scale_fill_viridis_d(option = "mako") +
+  ggtitle("log10(nCount_RNA)")
+```
+
+These can later be stitched together with another library, like patchwork, or cowplot.
+
+### Ridge plots
+
+Ridge plots are very similar in appearance to violin plots turned on their sides. In some cases it may be more appropriate to create the plots individually so that appropriate transformations can be applied to each plot.
+
+```{r ridgeplot}
+RidgePlot(experiment.aggregate, features="nFeature_RNA") +
+  scale_fill_viridis_d(option = "mako")
+RidgePlot(experiment.aggregate, features="nCount_RNA") +
+  scale_x_continuous(trans = "log10") + # "un-squish" the distribution
+  scale_fill_viridis_d(option = "mako")
+RidgePlot(experiment.aggregate, features="percent_MT") +
+  scale_fill_viridis_d(option = "mako") +
+  coord_cartesian(xlim = c(0, 10)) # zoom in on the lower end of the distribution
+```
+
+### Custom plots
+The Seurat built-in functions are useful and easy to interact with, but sometimes you may wish to visualize something for which a plotting function does not already exist. For example, we might want to see how many cells are expressing each gene over some UMI threshold.
+
+The code below produces a ranked plot similar to the barcode inflection plots from the last section. On the x-axis are the genes arranged from most ubiquitously expressed to rarest. In a single cell dataset, many genes are expessed in a relatively small number of cells, or not at all. The y-axis displays the number of cells in which each gene is expressed.
+
+**Note: this function is SLOW You may want to skip this code block or run it while you take a break for a few minutes.**
+
+```{r gene_range}
+# retrieve count data
+counts <- GetAssayData(experiment.aggregate)
+# order genes from most to least ubiquitous
+ranked.genes <- names(sort(Matrix::rowSums(counts >= 3), decreasing = TRUE))
+# drop genes not expressed in any cell
+ranked.genes <- ranked.genes[ranked.genes %in% names(which(Matrix::rowSums(counts >= 3) >= 1))]
+# get number of cells for each sample
+cell.counts <- sapply(ranked.genes, function(gene){
+  tapply(counts[gene,], experiment.aggregate$orig.ident, function(x){
+    sum(x >= 3)
+  })
+})
+cell.counts <- as.data.frame(t(cell.counts))
+cell.counts$gene <- rownames(cell.counts)
+cell.counts <- melt(cell.counts, variable.name = "sample", value.name = "count")
+cell.counts$rank <- match(ranked.genes, cell.counts$gene)
+# plot
+ggplot(cell.counts, mapping = aes(x = rank, y = count, color = sample)) +
+  scale_x_continuous(trans = "log10") +
+  scale_y_continuous(trans = "log10") +
+  geom_smooth() +
+  scale_color_viridis_d(option = "mako") +
+  theme_classic() +
+  theme(legend.title = element_blank())
+rm(counts, ranked.genes, cell.counts)
+```   
+
+### Scatter plots
+
+Scatter plots allow us to visualize the relationships between the metadata variables.
+
+```{r relationships}
+# mitochondrial vs UMI
+FeatureScatter(experiment.aggregate,
+               feature1 = "nCount_RNA",
+               feature2 = "percent_MT",
+               shuffle = TRUE) +
+  scale_color_viridis_d(option = "mako")
+# mitochondrial vs genes
+FeatureScatter(experiment.aggregate,
+               feature1 = "nFeature_RNA",
+               feature2 = "percent_MT",
+               shuffle = TRUE) +
+  scale_color_viridis_d(option = "mako")
+# genes vs UMI
+FeatureScatter(experiment.aggregate,
+               feature1 = "nCount_RNA",
+               feature2 = "nFeature_RNA",
+               shuffle = TRUE)  +
+  scale_color_viridis_d(option = "mako")
+```
+
+## Cell filtering
+The goal of cell filtering is to remove cells with anomolous expression profiles, typically low UMI cells, which may correspond to low-quality cells or background barcodes that made it through the Cell Ranger filtration algorithm. It may also be appropriate to remove outlier cells with extremely high UMI counts.
+
+In this case, the proposed cut-offs on the high end of the distributions are quite conservative, in part to reduce the size of the object and speed up analysis during the workshop.
+
+The plots below display proposed filtering cut-offs.
+```{r thresholds}
+FeatureScatter(experiment.aggregate,
+               feature1 = "nCount_RNA",
+               feature2 = "percent_MT",
+               shuffle = TRUE) +
+  geom_vline(xintercept = c(1000, 25000)) +
+  geom_hline(yintercept = 5) +
+  scale_color_viridis_d(option = "mako")
+FeatureScatter(experiment.aggregate,
+               feature1 = "nFeature_RNA",
+               feature2 = "percent_MT",
+               shuffle = TRUE) +
+  geom_vline(xintercept = c(500, 7500)) +
+  geom_hline(yintercept = 5) +
+  scale_color_viridis_d(option = "mako")
+FeatureScatter(experiment.aggregate,
+               feature1 = "nCount_RNA",
+               feature2 = "nFeature_RNA",
+               pt.size = 0.5,
+               shuffle = TRUE)  +
+  geom_vline(xintercept = c(1000, 25000)) +
+  geom_hline(yintercept = c(500, 7500)) +
+  scale_color_viridis_d(option = "mako")
+```
+
+These filters can be put in place with the `subset` function.
+
+```{r, cell_filtering}
+table(experiment.aggregate$orig.ident)
+# mitochondrial filter
+experiment.filter <- subset(experiment.aggregate, percent_MT <= 5)
+# UMI filter
+experiment.filter <- subset(experiment.filter, nCount_RNA >= 1000 & nCount_RNA <= 25000)
+# gene filter
+experiment.filter <- subset(experiment.filter, nFeature_RNA >= 500 & nFeature_RNA <= 7500)
+# filtering results
+experiment.filter
+table(experiment.filter$orig.ident)
+# ridge plots
+RidgePlot(experiment.filter, features="nFeature_RNA") +
+  scale_fill_viridis_d(option = "mako")
+RidgePlot(experiment.filter, features="nCount_RNA") +
+  scale_x_continuous(trans = "log10") + 
+  scale_fill_viridis_d(option = "mako")
+RidgePlot(experiment.filter, features="percent_MT") +
+  scale_fill_viridis_d(option = "mako")
+# use filtered results from now on
+experiment.aggregate <- experiment.filter
+rm(experiment.filter)
+```
+
+**Play with the filtering parameters, and see how the results change. Is there a set of parameters you feel is more appropriate? Why?**
+
+## Feature filtering
+
+When creating the base Seurat object, we had the opportunity filter out some genes using the "min.cells" argument. At the time, we set that to 0. Since we didn't filter our features then, we can apply a filter at this point, or if we did filter when the object was created, this would be an opportunity to be more aggressive with filtration. The custom code below provides a function that filters genes requiring a min.umi in at least min.cells, or takes a user-provided list of genes.
+
+```{r gene_filter}
+# define function
+FilterGenes <- function(object, min.umi = NA, min.cells = NA, genes = NULL) {
+  genes.use = NA
+  if (!is.null(genes)) {
+    genes.use = intersect(rownames(object), genes)
+    } else if (min.cells & min.umi) {
+      num.cells = Matrix::rowSums(GetAssayData(object) >= min.umi)
+      genes.use = names(num.cells[which(num.cells >= min.cells)])
+    }
+  object = object[genes.use,]
+  object = LogSeuratCommand(object = object)
+  return(object)
+}
+# apply filter
+experiment.filter <- FilterGenes(object = experiment.aggregate, min.umi = 2, min.cells = 10)
+# filtering results
+experiment.filter
+experiment.aggregate <- experiment.filter
+rm(experiment.filter)
+```
+
+## Normalize the data
+
+After filtering, the next step is to normalize the data. We employ a global-scaling normalization method LogNormalize that normalizes the gene expression measurements for each cell by the total expression, multiplies this by a scale factor (10,000 by default), and then log-transforms the data.
+
+```{r normalize_help, eval=FALSE}
+?NormalizeData
+```
+
+```{r normalize}
+experiment.aggregate <- NormalizeData(
+  object = experiment.aggregate,
+  normalization.method = "LogNormalize",
+  scale.factor = 10000)
+```
+
+## Cell cycle assignment
+Cell cycle phase can be a significant source of variation in single cell and single nucleus experiments. There are a number of automated cell cycle stage detection methods available for single cell data. For this workshop, we will be using the built-in Seurat cell cycle function, `CellCycleScoring`. This tool compares gene expression in each cell to a list of cell cycle marker genes and scores each barcode based on marker expression. The phase with the highest score is selected for each barcode. Seurat includes a list of cell cycle genes in human single cell data.
+
+```{r human_gene_list}
+s.genes <- cc.genes$s.genes
+g2m.genes <- cc.genes$g2m.genes
+```
+
+For other species, a user-provided gene list may be substituted, or the orthologs of the human gene list used instead.
+
+**Do not run the code below for human experiments!**
+```{r convert_list_mouse, eval=FALSE}
+# mouse code DO NOT RUN for human data
+convertHumanGeneList <- function(x){
+  require("biomaRt")
+  human = useEnsembl("ensembl",
+                     dataset = "hsapiens_gene_ensembl",
+                     mirror = "uswest")
+  mouse = useEnsembl("ensembl",
+                     dataset = "mmusculus_gene_ensembl",
+                     mirror = "uswest")
+  genes = getLDS(attributes = c("hgnc_symbol"),
+                 filters = "hgnc_symbol",
+                 values = x ,
+                 mart = human,
+                 attributesL = c("mgi_symbol"),
+                 martL = mouse,
+                 uniqueRows=T)
+  humanx = unique(genes[, 2])
+  print(head(humanx)) # print first 6 genes found to the screen
+  return(humanx)
+}
+# convert lists to mouse orthologs
+s.genes <- convertHumanGeneList(cc.genes.updated.2019$s.genes)
+g2m.genes <- convertHumanGeneList(cc.genes.updated.2019$g2m.genes)
+```
+
+Once an appropriate gene list has been identified, the `CellCycleScoring` function can be run.
+
+```{r CellCycleScoring}
+experiment.aggregate <- CellCycleScoring(experiment.aggregate,
+                                         s.features = s.genes,
+                                         g2m.features = g2m.genes,
+                                         set.ident = TRUE)
+table(experiment.aggregate@meta.data$Phase) %>%
+  kable(caption = "Number of Cells in each Cell Cycle Stage",
+        col.names = c("Stage", "Count"),
+        align = "c") %>%
+  kable_styling()
+rm(s.genes, g2m.genes)
+```
+
+Because the "set.ident" argument was set to TRUE (this is also the default behavior), the active identity of the Seurat object was changed to the phase. To return the active identity to the sample identity, use the `Idents` function.
+
+```{r update_ident}
+table(Idents(experiment.aggregate))
+Idents(experiment.aggregate) <- "orig.ident"
+table(Idents(experiment.aggregate))
+```
+
+
+## Identify variable genes
+
+The function FindVariableFeatures identifies the most highly variable genes (default 2000 genes) by fitting a line to the relationship of log(variance) and log(mean) using loess smoothing, uses this information to standardize the data, then calculates the variance of the standardized data.  This helps avoid selecting genes that only appear variable due to their expression level.
+
+```{r find_variable_genes_help, eval=FALSE}
+?FindVariableFeatures
+```
+
+```{r find_variable_genes}
+experiment.aggregate <- FindVariableFeatures(
+  object = experiment.aggregate,
+  selection.method = "vst")
+length(VariableFeatures(experiment.aggregate))
+
+top10 <- head(VariableFeatures(experiment.aggregate), 10)
+top10
+
+vfp1 <- VariableFeaturePlot(experiment.aggregate)
+vfp1 <- LabelPoints(plot = vfp1, points = top10, repel = TRUE)
+vfp1
+```
+
+**How do the results change if you use selection.method = "dispersion" or selection.method = "mean.var.plot"?**
+
+FindVariableFeatures isn't the only way to set the "variable features" of a Seurat object. Another reasonable approach is to select a set of "minimally expressed" genes.
+
+```{r minimally_expressed_genes}
+min.value <- 2
+min.cells <- 10
+
+num.cells <- Matrix::rowSums(GetAssayData(experiment.aggregate, slot = "count") > min.value)
+genes.use <- names(num.cells[which(num.cells >= min.cells)])
+length(genes.use)
+
+VariableFeatures(experiment.aggregate) <- genes.use
+rm(min.value, min.cells, num.cells, genes.use)
+```
+
+## Save the Seurat object and download the next Rmd file
+```{r saveRDS}
+saveRDS(experiment.aggregate, file="scRNA_workshop_2.rds")
+download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-June-Single-Cell-RNA-Seq-Analysis/main/data_analysis/scRNA_Workshop-PART3.Rmd", "scRNA_Workshop-PART3.Rmd")
+```
+
+## Session Information
+```{r session_info, warning=FALSE,error=FALSE,message=FALSE}
+sessionInfo()
+```

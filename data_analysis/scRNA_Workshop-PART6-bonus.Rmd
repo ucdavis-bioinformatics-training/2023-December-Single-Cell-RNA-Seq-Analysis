@@ -1,0 +1,143 @@
+---
+title: "Introduction to Single Cell RNAseq Part 6"
+author: "UCD Bioinformatics Core"
+output:
+    html_document:
+      keep_md: TRUE
+---
+
+Last Updated: December 8, 2022
+
+# Part 6: Add Doublet Detection
+
+Doublets are cells that appear to be, but are not, real cells. There are two major types of doublets: heterotypic and homotypic. Heterotypic doublets are formed by cells with distinct transcriptional profiles. Homotypic doublets are formed by cells with similar transcriptional profiles. Heterotypic doublets are relatively easier to detect compared with homotypic doublets. Depending on the protocols used to barcode single cells/nuclei, doublet rates vary significantly and it can reach as high as 40%.
+
+Experimental strategies have been developed to reduce the doublet rate, such as [cell hashing](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-018-1603-1), [demuxlet](https://www.nature.com/articles/nbt.4042), and [MULTI-Seq](https://www.nature.com/articles/s41592-019-0433-8). However, these techniques require extra steps in sample preparation which leads to extra costs, time and they do not guarantee to remove all doublets.
+
+Naturally, removing doublets _in silico_ is very appealing and there have been many tools/methods developed to achieve this: [DoubletFinder](https://www.cell.com/cell-systems/pdfExtended/S2405-4712(19)30073-0), DoubletDetection(https://github.com/JonathanShor/DoubletDetection), [DoubletDecon](https://www.sciencedirect.com/science/article/pii/S2211124719312860), among others.
+
+<p align = "center">
+<img src="figures/doublets.jpg" alt="micribial" width="85%"/>
+</p>
+
+<p align = "right" style="font-family:Times;font-size:12px;">
+Xi, etc., Cell Systems, 2021, https://www.sciencedirect.com/science/article/pii/S2405471220304592
+</p>
+
+
+## Doublet detection with DoubletFinder
+
+[DoubletFinder](https://github.com/chris-mcginnis-ucsf/DoubletFinder) takes fully pre-processed data from Seurat (NormalizeData, FindVariableGenes, ScaleData, RunPCA and RunTSNE) as input and the process should be done for each sample individually. The input data should be processed to remove low-quality cell clusters first.
+
+We are going to run DoubletFinder on sample _A001-C-007_.
+
+We start each markdown document with installing/loading needed libraries for R:
+
+
+```{r, warning=FALSE,error=FALSE,message=FALSE}
+# must install DoubletFinder
+if (!any(rownames(installed.packages()) == "DoubletFinder")){
+  remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')
+}
+
+library(DoubletFinder)
+
+# must have Seurat
+library(Seurat)
+library(kableExtra)
+library(ggplot2)
+
+```
+
+
+### Setup the experiment folder and data info
+```{r exp_setup, warning=FALSE,error=FALSE, message=FALSE}
+experiment_name = "Colon Cancer"
+dataset_loc <- "./"
+ids <- c("A001-C-007", "A001-C-104", "B001-A-301")
+```
+
+
+## Load the Cell Ranger Matrix Data and create the base Seurat object.
+This section is done the same way as in __scRNA_Workshop-PART1.Rmd__
+
+Seurat provides a function `Read10X` and `Read10X_h5` to read in 10X data folder. First we read in data from each individual sample folder. 
+
+Later, we initialize the Seurat object (`CreateSeuratObject`) with the raw (non-normalized data). Keep all cells with at least 200 detected genes. Also extracting sample names, calculating and adding in the metadata mitochondrial percentage of each cell. Adding in the metadata batchid and cell cycle. Finally, saving the raw Seurat object.
+
+## Load the Cell Ranger Matrix Data (hdf5 file) and create the base Seurat object.
+```{r load_data_hdf5, warning=FALSE,error=FALSE, message=FALSE}
+d10x.data <- lapply(ids, function(i){
+  d10x <- Read10X_h5(file.path(dataset_loc, i, "outs","raw_feature_bc_matrix.h5"))
+  colnames(d10x) <- paste(sapply(strsplit(colnames(d10x),split="-"),'[[',1L),i,sep="-")
+  d10x
+})
+names(d10x.data) <- ids
+
+str(d10x.data)
+```
+
+If you don't have the needed hdf5 libraries you can read in the matrix files like such
+
+```{r load_data_matrix, eval=FALSE}
+d10x.data <- sapply(ids, function(i){
+  d10x <- Read10X(file.path(dataset_loc, i, "/outs","raw_feature_bc_matrix"))
+  colnames(d10x) <- paste(sapply(strsplit(colnames(d10x), split="-"), '[[', 1L), i, sep="-")
+  d10x
+})
+names(d10x.data) <- ids
+```
+
+
+### Create the Seurat object
+
+Filter criteria: remove genes that do not occur in a minimum of 0 cells and remove cells that don't have a minimum of 200 features/genes
+
+```{r create_seurat_object, warning=FALSE,error=FALSE, message=FALSE}
+
+doublet.removed <- lapply(ids, function(x){
+  experiment.data <- CreateSeuratObject(
+    d10x.data[[1]],
+    project = "A001-C-007",
+    min.cells = 0,
+    min.features = 200,
+    names.field = 2,
+    names.delim = "\\-")
+
+  experiment.data$percent.mito <- PercentageFeatureSet(experiment.data, pattern = "^MT-")
+  
+  experiment.data <- subset(experiment.data, percent.mito <= 8)
+  
+  experiment.data <- subset(experiment.data, nFeature_RNA >= 400 & nFeature_RNA <= 4000)
+  
+  experiment.data <- subset(experiment.data, nCount_RNA >= 500 & nCount_RNA <= 12000)
+  
+  experiment.data <- NormalizeData(experiment.data)
+  experiment.data <- FindVariableFeatures(experiment.data, selection.method = "vst", nfeatures = 2000)
+  experiment.data <- ScaleData(experiment.data)
+  experiment.data <- RunPCA(experiment.data)
+  experiment.data <- FindNeighbors(experiment.data, reduction="pca", dims = 1:20)
+  experiment.data <- FindClusters(
+      object = experiment.data,
+      resolution = seq(0.25,4,0.5),
+      verbose = FALSE
+  )
+  experiment.data <- RunUMAP(experiment.data, dims=1:20)
+  
+  sweep.res <- paramSweep_v3(experiment.data, PCs = 1:20, sct = FALSE)
+  sweep.stats <- summarizeSweep(sweep.res, GT = FALSE)
+  bcmvn <- find.pK(sweep.stats)
+  pK.set <- unique(sweep.stats$pK)[which(bcmvn$BCmetric == max(bcmvn$BCmetric))]
+  
+  nExp_poi <- round(0.08*nrow(experiment.data@meta.data))
+  
+  experiment.data <- doubletFinder_v3(experiment.data, PCs = 1:20, pN = 0.25, pK = as.numeric(as.character(pK.set)), nExp = nExp_poi, reuse.pANN = FALSE, sct = FALSE)
+  
+  experiment.data <- subset(experiment.data,  DF.classifications_0.25_0.02_142 == "Singlet")
+return(getAssayData(experiment.data, slot="count"))
+```
+
+## Session Information
+```{r sessioinfo}
+sessionInfo()
+```
