@@ -71,420 +71,215 @@ function showResults(myq, qc, rc){
 }
 </script>
 
-## Command Line Interface
+# Prerequisites: Command Line Interface
 
-A basic understanding of the command line interface (CLI) is highly recommended for success in this course. We will briefly review the commands necessary for this course on the first morning, but there will not be enough time to provide full instruction in CLI basics. Beginners without any previous knowledge will be able to complete this course, and achieve a more thorough understanding of the techniques and analyses covered, but will probably not be able to conduct an experiment on their own.
+A basic understanding of the command line interface (CLI) is recommended for success in this course. We will briefly review the small number of commands necessary for this course on the first morning. Beginners without any previous knowledge will be able to complete this course, but may wish to consider reaching out to a collaborator or service provider for assistance with the data reduction phase of their experiments.
 
-If you do not have CLI experience, or it has been a while since you last worked on the command line, please take some time before the workshop to work through the first part of the [Introduction to the Command Line for Bioinformatics](https://ucdavis-bioinformatics-training.github.io/2022-Jan-Introduction-to-the-Command-Line-for-Bioinformatics/){:target="_blank"} course.
-
-Of course, you are free to continue working through all the materials in Introduction to the Command Line for Bioinformatics! The more confident you are in your command line skills, the more you will be able to explore the content in this course.
-
-# Introduction to Command Line Interface
+Additional materials on the use of the command line for bioinformatics can be found in our [Introduction to the Command Line for Bioinformatics](https://ucdavis-bioinformatics-training.github.io/2022-Jan-Introduction-to-the-Command-Line-for-Bioinformatics/){:target="_blank"} course.
 
 ## Outline:
 1. What is the command line?
-2. Directory Structure
-3. Syntax of a Command
-4. Options of a Command
-5. Command Line Basics (ls, pwd, Ctrl-C, man, alias, ls -lthra)
-6. Getting Around (cd)
-7. Absolute and Relative Paths
-8. Create and Destroy (echo, cat, rm, rmdir)
-9. Symbolic Links (ln -s)
-10. Forced Removal (rm -r)
-11. Shell Scripts and File Permissions (chmod, nano, ./)
+2. Syntax of a command
+3. Logging into the cluster
+4. Command line basics
+5. Shell scripts
+6. Interacting with a scheduler
 
-* The CLI is a tool into which one can type commands to perform tasks.
-* The user interface that accepts the typed responses and displays the data on the screen is called a shell: bash, tcsh…
-* An all-text display (most of the time your mouse doesn't work)
+## What is the command line?
 
-<img src="figures/cli_figure1.png" alt="cli_figure1" width="800px"/>
+The command line interface (CLI) is a powerful text-based interface that
+* Allows the user to efficiently navigate the filesystem
+* Interact easily with large files of the types common in bioinformatics
+* Execute commands (interactively or in the background), creating and removing files as needed
 
-After opening or logging into a terminal, system messages are often displayed, followed by the "prompt".
-A prompt is a short text message at the start of the command line and ends with '$' in bash shell, commands are typed after the prompt. The prompt typically follows the form **username@server:current_directory$**. If your screen looks like the one below, i.e. your see your a bunch of messages and then your username followed by "@tadpole:~$" at the beginning of the line, then you are successfully logged in.
-
-<img src="figures/cli_figure4.png" alt="cli_figure4" width="800px"/>
-
-
-## Command Line Basics
-
-First some basics - how to look at your surroundings.
-
-    pwd
-
-present working directory ... where am I?
-
-    ls
-
-list files here ... you should see nothing since your homes are empty
-
-    ls /tmp/
-
-list files somewhere else, like /tmp/
-
-
-Because one of the first things that's good to know is *how to escape once you've started something you don't want*.
-
-    sleep 1000  # wait for 1000 seconds!
-
-Use Ctrl-c (shows as '^C' in the terminal) to exit (kill) a command. In some cases, a different key sequence is required (Ctrl-d). Note that anything including and after a "#" symbol is ignored, i.e. a comment. **So in all the commands below, you do not have to type anything including and past a "#".**
-
-
-#### Options
-
-Each command can act as a basic tool, or you can add 'options' or 'flags' that modify the default behavior of the tool. These flags come in the form of '-v' ... or, when it's a more descriptive word, two dashes: '\-\-verbose' ... that's a common (but not universal) one that tells a tool that you want it to give you output with more detail. Sometimes, options require specifying amounts or strings, like '-o results.txt' or '\-\-output results.txt' ... or '-n 4' or '\-\-numCPUs 4'. Let's try some, and see what the man page for the 'list files' command 'ls' is like.
-
-    ls -R /
-
-Lists directories and files *recursively*. This will be a very long output, so use Ctrl-C to break out of it. Sometimes you have to press Ctrl-C many times to get the terminal to recognize it. In order to know which options do what, you can use the manual pages. To look up a command in the manual pages type "man" and then the command name. So to look up the options for "ls", type:
-
-    man ls
-
-Navigate this page using the up and down arrow keys, PageUp and PageDown, and then use q to quit out of the manual. In this manual page, find the following options, quit the page, and then try those commands. You could even open another terminal, log in again, and run manual commands in that terminal.
-
-    ls -l /usr/bin/ # long format, gives permission values, owner, group, size, modification time, and name
-
-<img src="figures/ls1.png" alt="ls1" width="800px"/>
-
-    ls -a /lib # shows ALL files, including hidden ones
-
-<img src="figures/ls2.png" alt="ls2" width="800px"/>
-
-    ls -l -a /usr/bin # does both of the above
-
-<img src="figures/ls3.png" alt="ls3" width="800px"/>
-
-    ls -la /usr/bin # option 'smushing' can be done with single letter options
-
-<img src="figures/ls4.png" alt="ls4" width="800px"/>
-
-    ls -ltrha /usr/bin # shows all files, long format, in last modified time reverse order, with human readable sizes
-
-<img src="figures/ls5.png" alt="ls5" width="800px"/>
-
-And finally adding color (white for regular files, blue for directories, turquoise for links):
-
-    ls -ltrha --color /usr/bin # single letter (smushed) vs word options (Linux)
-
-**OR**
-
-    ls -ltrhaG /usr/bin # (MacOS)
-
-<img src="figures/ls6.png" alt="ls6" width="800px"/>
-
-
-Quick aside: what if I want to use same options repeatedly? and be lazy? You can create a shortcut to another command using 'alias'.
-
-    alias ll='ls -lah'
-    ll
-
-
-## Directory Structure
-
-Absolute path: always starts with ”/” - the root folder
-
-/share/workshop/msettles/intro_scrnaseq/cli
-
-the folder (or file) "cli" in the folder "msettles" in the folder "intro_scrnaseq" in the folder "workshop" in the folder "share" from the root folder.
-
-Relative path: always relative to our current location.
-
-_a single dot (.) refers to the current directory_
-_two dots (..) refers to the directory one level up_
-
-<img src="figures/cli_figure2.png" alt="cli_figure2" width="500px"/>
-
-Usually, /home is where the user accounts reside, ie. users' 'home' directories.
-For example, for a user that has a username of “msettles”: their home directory is /home/msettles
-It is the directory that a user starts in after starting a new shell or logging into a remote server.
-
-The tilde (~) is a short form of a user’s home directory.
+In general, the only input to the command line is the keyboard. Point and click functionality is typically not available.
 
 ## Syntax of a command
 
-* A command plus the required parameters/arguments
-* The separator used in issuing a command is space, number of spaces does not matter
+When you open a terminal, you will see a *prompt*. This is composed of the username, host (tadpole), and working directory. Commands are run by typing the name of the command, any options or arguments.
 
-<img src="figures/cli_figure3.png" alt="cli_figure3" width="800px"/>
+![figures/prompt_20230710.png]
 
-## Quiz 1
+## Command line basics
 
-<div id="quiz1" class="quiz"></div>
-<button id="submit1">Submit Quiz</button>
-<div id="results1" class="output"></div>
-<script>
-quizContainer1 = document.getElementById('quiz1');
-resultsContainer1 = document.getElementById('results1');
-submitButton1 = document.getElementById('submit1');
+This brief introduction will cover only the minimum required to perform the necessary data reduction steps for a single cell RNA-seq experiment. Because the data reduction phase of an scRNA-seq experiment is relatively straightforward, we will be moving swiftly through this prerequisites section, and covering essential commands only.
 
-myQuestions1 = [
-  {
-    question: "What does the -h option for the ls command do?",
-    answers: {
-      a: "Creates a hard link to a file",
-      b: "Shows the file sizes in a human readable format",
-      c: "Shows the help page",
-      d: "Recursively lists directories"
-    },
-    correctAnswer: "b"
-  },
-  {
-    question: "What does the -l option for ls do?",
-    answers: {
-      a: "Produces a listing of all the links",
-      b: "Produces a time stamp sorted list",
-      c: "Produces a log file",
-      d: "Produces a detailed format list"
-    },
-    correctAnswer: "d"
-  },
-  {
-    question: "Which option turns off the default sort in the ls output?",
-    answers: {
-      a: "-U",
-      b: "-t",
-      c: "--hide",
-      d: "-H"
-    },
-    correctAnswer: "a"
-  }
-];
+In this course, we will be using the following commands:
+* ssh
+* pwd, cd, and ls
+* mkdir, cp, and ln
+* less, zless, cat, zcat, head, tail, and wc
+* export, and module load
+* scp
 
-buildQuiz(myQuestions1, quizContainer1);
-submitButton1.addEventListener('click', function() {showResults(myQuestions1, quizContainer1, resultsContainer1);});
-</script>
+### Loggining in
 
+The data reduction component of this course will be performed on the Genome Center computing cluster. Before the workshop, you should have been prompted to create a username and password that will allow you access to the cluster for the duration of the course. We'll be using these credentials to log in:
 
-## Getting Around
+    ssh username@tadpole.genomecenter.ucdavis.edu # don't forget to replace "username" with your username!
 
-The filesystem you're working on is like the branching root system of a tree. The top level, right at the root of the tree, is called the 'root' directory, specified by '/' ... which is the divider for directory addresses, or 'paths'. We move around using the 'change directory' command, 'cd'. The command pwd return the present working directory.
+When you press enter, you'll be asked for your password, but as you type, you won't be able to see anything. This is normal! Please type carefully, and, when your password is complete, press enter.
 
-    cd  # no effect? that's because by itself it sends you home (to ~)
-    cd /  # go to root of tree's root system
-    cd home  # go to where everyone's homes are
-    pwd
-    cd username  # use your actual home, not "username"
-    pwd
-    cd /
-    pwd
-    cd ~  # a shortcut to home, from anywhere
-    pwd
-    cd .  # '.' always means *this* directory
-    pwd
-    cd ..  # '..' always means *one directory up*
+### Navigation: pwd, cd, and ls
+
+When working on the command line, it is essential to know "where" you are operating from at any given moment. The files on your computer-- everything from your sequence fastqs to the software you're about to run-- is organized into a hierarchy of directories (sometimes referred to as "folders" on your desktop computer) that can be imagined as a tree. By default, commands will operate on the "present working directory," which you can think of as your location within this tree.
+
+#### pwd: present working directory
+
     pwd
 
-<img src="figures/cli_figure5.png" alt="cli_figure5" width="800px"/>
+This command returns the present working directory represented as a series of directories descending from the "root," and separated by "/" characters.
 
-**You should also notice the location changes in your prompt.**
+#### cd: change directory
 
-## Absolute and Relative Paths
+Your present working directory can be changed using the cd command.
 
-You can think of paths like addresses. You can tell your friend how to go to a particular store *from where they are currently* (a 'relative' path), or *from the main Interstate Highway that everyone uses* (in this case, the root of the filesystem, '/' ... this is an 'absolute' path). Both are valid. But absolute paths can't be confused, because they always start off from the same place, and are unique. Relative paths, on the other hand, could be totally wrong for your friend *if you assume they're somewhere they're not*. With this in mind, let's try a few more:
-
-    cd /usr/bin  # let's start in /usr/bin
-
-**relative** (start here, take one step up, then down through lib and gcc)
-
-    cd ../lib/gcc/
+    cd /share/workshop/
     pwd
 
-**absolute** (start at root, take steps)
+The location of any directory can be represented in one of two ways:
+- the absolute path, which begins from the root
+- the relative path, which begins from the present working directory
 
-    cd /usr/lib/gcc/
+    cd ..
     pwd
 
-Now, because it can be a real pain to type out, or remember these long paths, we need to discuss ...
+In a relative path, the ".." refers to the directory one level above the present location. To specify a directory two levels above the present working directory, use "../..", and so on.
 
-## Quiz 2
+The absolute path will always begin with a "/" character. When in doubt, use the absolute path.
 
-<div id="quiz2" class="quiz"></div>
-<button id="submit2">Submit Quiz</button>
-<div id="results2" class="output"></div>
-<script>
-quizContainer2 = document.getElementById('quiz2');
-resultsContainer2 = document.getElementById('results2');
-submitButton2 = document.getElementById('submit2');
+#### ls: list directory contents
 
-myQuestions2 = [
-  {
-    question: "What is the tilde short for?",
-    answers: {
-      a: "Your home directory",
-      b: "Your user name",
-      c: "Your current directory",
-      d: "The root directory"
-    },
-    correctAnswer: "a"
-  },
-  {
-    question: "From the /usr/bin directory, verify that the two following commands are equivalent:<br/><br/>cd ../../lib/<br/>cd ../../../../../../../lib<br/><br/>Why are these very different-looking commands equivalent?",
-    answers: {
-      a: "The cd command knows where your home directory resides",
-      b: "The terminal ignores excess dots",
-      c: "Because going one directory up from root just takes you back to root",
-      d: "Home is the root directory"
-    },
-    correctAnswer: "c"
-  }
-];
+    ls
 
-buildQuiz(myQuestions2, quizContainer2);
-submitButton2.addEventListener('click', function() {showResults(myQuestions2, quizContainer2, resultsContainer2);});
-</script>
+By default, files within the present working directory are displayed. The ls command can also take a path as an argument, returning the content of that directory instead.
 
-## Create and Destroy
+    ls /share/genomes/
 
-We already learned one command that will create a file, touch.
+Many commands, including ls, have numerous options that can be specified using a "-" character. The "-lh" in the example below provides an extended output with human-readable file sizes.
 
-    cd  # home again
-    echo $USER # echo to screen the contents of the variable $USER
-    mkdir ~/tmp2
-    cd ~/tmp2
-    echo 'Hello, world!' > first.txt
-
-echo text then redirect ('>') to a file.
-
-    cat first.txt  # 'cat' means 'concatenate', or just spit the contents of the file to the screen
-
-why 'concatenate'? try this:
-
-    cat first.txt first.txt first.txt > second.txt
-    cat second.txt
-
-OK, let's destroy what we just created:
-
-    cd ../
-    rmdir tmp2  # 'rmdir' meands 'remove directory', but this shouldn't work!
-    rm tmp2/first.txt
-    rm tmp2/second.txt  # clear directory first
-    rmdir tmp2  # should succeed now
-
-So, 'mkdir' and 'rmdir' are used to create and destroy (empty) directories. 'rm' to remove files. To create a file can be as simple as using 'echo' and the '>' (redirection) character to put text into a file. Even simpler is the 'touch' command.
-
-    mkdir ~/cli
-    cd ~/cli
-    touch newFile
-    ls -ltra  # look at the time listed for the file you just created
-    cat newFile  # it's empty!
-    sleep 60  # go grab some coffee
-    touch newFile
-    ls -ltra  # same time?
-
-So 'touch' creates empty files, or updates the 'last modified' time. Note that the options on the 'ls' command you used here give you a Long listing, of All files, in Reverse Time order (l, a, r, t).
-
-## Symbolic Links
-
-Since copying or even moving large files (like sequence data) around your filesystem may be impractical, we can use links to reference 'distant' files without duplicating the data in the files. Symbolic links are disposable pointers that refer to other files, but behave like the referenced files in commands. I.e., they are essentially 'Shortcuts' (to use a Windows term) to a file or directory.
-
-The 'ln' command creates a link. **You should, by default, always create a symbolic link using the -s option.**
-
-    ln -s ~/newFile .
-    ls -ltrhaF  # notice the symbolic link pointing at its target
+    ls -lh /usr/bin
 
 
-## Forced Removal
+### Creating files: mkdir, cp, and ln
 
-When you're on the command line, there's no 'Recycle Bin'. Since we've expanded a whole directory tree, we need to be able to quickly remove a directory without clearing each subdirectory and using 'rmdir'.
+In the course of our single cell experiment, we will need to create directories (to organize our project) and files, including scripts.
 
-    cd
-    mkdir -p rmtest/dir1/dir2 # the -p option creates all the directories at once
-    rmdir rmtest # gives an error since rmdir can only remove directories that are empty
-    rm -rf rmtest # will remove the directory and EVERYTHING in it
+#### mkdir: make directory
 
-Here -r = recursively remove sub-directories, -f means *force*. Obviously, be careful with 'rm -rf', there is no going back, if you delete something with rm, rmdir its gone! **There is no Recycle Bin on the Command-Line!**
+The -p option here creates any missing intermediate directories and silences any error messages generated by attempting to create a directory that already exists.
 
-## Quiz 3
+    mkdir -p /share/workshop/scrna_workshop/$USER/cli
+    cd /share/workshop/scrna_workshop/$USER/cli
+    pwd
 
-<div id="quiz3" class="quiz"></div>
-<button id="submit3">Submit Quiz</button>
-<div id="results3" class="output"></div>
-<script>
-quizContainer3 = document.getElementById('quiz3');
-resultsContainer3 = document.getElementById('results3');
-submitButton3 = document.getElementById('submit3');
+#### cp: copy
 
-myQuestions3 = [
-  {
-    question: "In the command 'rm -rf rmtest', what is 'rmtest'?",
-    answers: {
-      a: "An option",
-      b: "An argument",
-      c: "A command",
-      d: "A choice"
-    },
-    correctAnswer: "b"
-  },
-  {
-    question: "Make a directory called test and then run 'rm test'. What happens?",
-    answers: {
-      a: "Nothing happens",
-      b: "The directory is removed",
-      c: "The terminal exits",
-      d: "You get an error message"
-    },
-    correctAnswer: "d"
-  },
-  {
-    question: "Use ls to find the size (in bytes) of the last file in the /sbin directory.",
-    answers: {
-      a: "33211",
-      b: "77064",
-      c: "1058216",
-      d: "1103"
-    },
-    correctAnswer: "b"
-  }
-];
+The cp command copies files, or, when using the -r option, directories. This command should be used with caution, as creating many copies of large files, such as sequencing data or genomes is often unnecessary.
 
-buildQuiz(myQuestions3, quizContainer3);
-submitButton3.addEventListener('click', function() {showResults(myQuestions3, quizContainer3, resultsContainer3);});
-</script>
+    cp /share/workshop/scrna_workshop/Scripts/template.sh .
+    ls
+
+#### ln: link
+
+Instead of duplicating raw data and other large files, it is typical to create symbolic links. The resulting symbolic link can be treated as a copy of the file.
+
+    ln -s /share/workshop/scrna_workshop/Data/example.sam .
+    ln -s /share/workshop/scrna_workshop/Data/example.fastq.gz
+    ls -lh
 
 
+### Reading files: less, zless, cat, zcat, head, tail, and wc
 
-## Shell Scripts, File Permissions
+A number of commands are available to inspect the content of a file.
 
-Often it's useful to define a whole string of commands to run on some input, so that (1) you can be sure you're running the same commands on all data, and (2) so you don't have to type the same commands in over and over! Let's use the 'nano' text editor program that's pretty reliably installed on most linux systems.
+#### less and zless: paged reading
 
-    nano test.sh
+The less command provides a paged reader view of the specified file. Advance through the file with the spacebar, or the down arrow, and move backwards by pressing "b" or the up arrow. The -S option prevents line wrapping.
 
-<img src="figures/cli_figure7.png" alt="cli_figure7" width="800px"/>
+    ls -S example.sam
 
-nano now occupies the whole screen; see commands at the bottom. Let's type in a few commands. First we need to put the following line at the top of the file:
+Take a few minutes to get comfortable with the less reader interface. To exit the reader view, press "q". Further options and tools for navigating within less are provided by the manual, which can be accessed using the man command: `man less`
 
-<div class="script">
-#!/bin/bash
-</div>
+Compressed files are not human-readable. To view a gzipped file in a paged reader, use zless instead. This reader uses the same controls as less.
 
-The "#!" at the beginning of a script tells the shell what language to use to interpret the rest of the script. In our case, we will be writing "bash" commands, so we specify the full path of the bash executable after the "#!". Then, add some commands:
+    zless example.fastq.gz
 
-<div class="script">
-#!/bin/bash
+#### cat and zcat: print output to screen
 
-echo "Start script..."
-pwd
-ls -l
-sleep 10
-echo "End script."
-</div>
+The cat command prints the content of any file(s) provided as arguments to the screen, concatenating them if more than one is present. As with less/zless above, zcat is designed to operate on gzipped files, printing uncompressed data without uncompressing the file itself.
 
-Hit Cntl-O and then enter to save the file, and then Cntl-X to exit nano.
+    cat example.sam
+    zcat example.fastq.gz
+
+Why would this be useful? The output of one command can be sent to another command as input using the "pipe" character, as you'll see below. Sometimes commands that may seem pointless in isolation are unexpectedly powerful when linked together with pipes.
+
+#### head and tail: display specified lines
+
+Sometimes viewing just the beginning or end of a file is sufficient. In those cases, you can use head or tail. By default, these commands print the first (head) or last (tail) ten lines of the provided file(s). To learn more about the options available for these two commands, use `man head`.
+
+    head example.sam
+    tail example.sam
+    zcat example.fastq.gz | head
+    zcat example.fastq.gz | head --lines 4 | tail --lines 1
+
+#### wc: word count
+
+Word count (wc) calculates the number of characters, space-delimited words, and newline-delimited lines within a file. The character count includes whitespace characters such as spaces, tabs, and newlines.
+
+    wc example.sam
+    zcat example.fastq.gz | head --lines 4 | tail --lines 1 | wc -c
+
+### Modifying environment variables: echo, export, and module load
+
+When a command is typed on the command line, the operating system searches for an executable file with a matching name within a specified series of directories known as the path. The content of the path is stored within an automatically generated variable called $PATH.
+
+    echo $PATH
+
+The path can be modified in a number of ways.
+
+    export $PATH
+    echo $PATH
+
+The module command also modifies the path, adding directories containing the executables associated with user-installed software to the path temporarily.
+
+    module load cellranger
+    echo $PATH
+
+### Downlaoding files: scp
+
+The s in scp stands for "secure." For this section, we you will need to work on your local computer instead of tadpole. Open a fresh terminal.
+
+    scp username@tadpole.genomecenter.ucdavis.edu:/share/workshop/scrna_workshop/Scripts/template.sh .
+
+You will be prompted to input your password. Don't forget to replace "username" with your username.
+
+## Shell scripts
+
+Often it's useful to define a whole string of commands to run on some input, so that (1) you can be sure you're running the same commands on all data, and (2) so you don't have to type the same commands in over and over. Let's use the 'nano' text editor program that's pretty reliably installed on most linux systems.
+
+    nano template.sh
+
+The nano text editor now occupies the whole screen; commands to find, replace, edit, save changes, and exit the editor appear at the bottom of the window.
+
+The "#!" at the beginning of a script tells the shell what language to use to interpret the rest of the script. In our case, we will be writing "bash" commands, so we specify the full path of the bash executable after the "#!".
+
+The rest of the lines contain either executable code or comments. Any text after a "#" is ignored by the interpreter. Make any changes you like to the code, hit Cntl-O and then enter to save the file, and then Cntl-X to exit nano.
 
 Though there are ways to run the commands in test.sh right now, it's generally useful to give yourself (and others) 'execute' permissions for test.sh, really making it a shell script. Note the characters in the first (left-most) field of the file listing:
 
-    ls -lh test.sh
+    ls -lh template.sh
 
-<div class="output">-rw-rw-r-- 1 msettles biocore 79 Aug 19 15:05 test.sh
+<div class="output">-rw-rw-r-- 1 msettles biocore 79 Aug 19 15:05 template.sh
 </div>
 
 
 The first '-' becomes a 'd' if the 'file' is actually a directory. The next three characters represent **r**ead, **w**rite, and e**x**ecute permissions for the file owner (you), followed by three characters for users in the owner's group, followed by three characters for all other users. Run the 'chmod' command to change permissions for the 'test.sh' file, adding execute permissions ('+x') for the user (you) and your group ('ug'):
 
-    chmod ug+x test.sh
-    ls -lh test.sh
+    chmod ug+x template.sh
+    ls -lh template.sh
 
-<div class="output">-rwxr-xr-- 1 msettles biocore 79 Aug 19 15:05 test.sh
+<div class="output">-rwxr-xr-- 1 msettles biocore 79 Aug 19 15:05 template.sh
 </div>
 
 The first 10 characters of the output represent the file and permissions.
@@ -493,71 +288,32 @@ The first character is the file type, the next three sets of three represent the
 - w = write
 - x = execute
 
-So let's run this script. We have to provide a relative reference to the script './' because its not our our "PATH".:
+Run the script. We have to provide a relative reference to the script './' because its not on our path.
 
     ./test.sh
 
-And you should see all the commands in the file run in sequential order in the terminal.
+## Interacting with a scheduler
 
+Many institutions maintain computing clusters for bioinformatics and other forms of data analysis. A cluster is typically a shared resource consisting of one or more head nodes, and a large number of compute nodes.
 
-# Running jobs on the cluster
+![figures/cluster_diagram.png]
 
-**1\.** In the UC Davis Bioinformatics Core we have a large computational cluster (named lssc0) that we use for our analyses. The job scheduling system we use on this cluster is called [Slurm](https://slurm.schedmd.com/). In this section, we will go through examples of the commands we will be using to interact with the cluster.
+Users log into a head node (like tadpole) to perform simple operations and to submit more complex, resource intensive jobs, which will be run on the compute nodes. **It is important to avoid running large tasks that may take a great deal of memory or CPU power on a head node**; using head node resources for running jobs prevents other users from successfully performing simply operations like changing directories, editing scripts, and submitting jobs.
 
-For this workshop we will be using a cluster reservation, meaning we've set aside resources for exclusive use by the workshop, so any wait times will be minimal. The reservation is:
+A computing cluster like the one we're using for this workshop is commonly administered by a scheduler, which balances the demands on the cluster to allocate resources to competing jobs as efficiently as possible.
 
-|:---      |:---     |:---                 |:---                 |:---         |
-|RESV_NAME |  STATE  |         START_TIME  |           END_TIME  | DURATION    |
-| scworkshop | INACTIVE | 2022-03-18T00:00:00 | 2022-03-26T00:00:00 | 8-00:00:00 | fleet-[10-12,17-20,22]|
+The cluster we will be using for this workshop (called lssc0) runs on a scheduling system called [Slurm](https://slurm.schedmd.com/).
 
+In this section, we will go through examples of the commands we will be using to interact with the cluster:
+* sbatch
+* squeue
+* scancel
 
-You'll notice the reservation extends to March-26-2022, you will have until the end of the week to work on the cluster and workshop material.
+There are several more commands available to interact with Slurm, each of which has many options. To find out more, visit [this summary page](https://slurm.schedmd.com/pdfs/summary.pdf).
 
-## First, what is a cluster?
+### sbatch: submit a batch job
 
-<img src="figures/cluster_diagram.png" alt="figures/cluster_diagram" width="800px"/>
-
-The basic architecture of a compute cluster consists of a "head node", which is the computer from which a user submits jobs to run, and "compute nodes", which are a large number of computers on which the jobs can be run. It is also possible to log into a compute node and run jobs directly from there. **In general you should never run a job directly on the head node!**
-
-### Lets login to the cluster
-
-    ssh username@tadpole.genomecenter.ucdavis.edu
-
-where 'username' is replaced with your username. Press Enter.
-
----
-**2\.** Now, let's look at a few slurm commands.
-
-The main commands we will be using are srun, sbatch, squeue, scancel, and sacct. First, log into the head node (tadpole.genomecenter.ucdavis.edu) and make a directory for yourself where you will be doing all your work.
-
-    mkdir /share/workshop/intro_scrnaseq/$USER
-    cd /share/workshop/intro_scrnaseq/$USER
-
-**2a\.** ['srun'](https://slurm.schedmd.com/srun.html) is used to run a job interactively. We most often use it to start an interactive session on a compute node. Take a look at the options to srun:
-
-    srun --help
-
-Our cluster requires that you specify a time limit for your job. If your job exceeds these limits, then it will be killed. So try running the following to create an interactive session on a node:
-
-    srun -t 00:30:00 -c 1 -n 1 --mem 500 --partition production --account workshop --reservation scworkshop --pty /bin/bash
-
-This command is requesting a compute node with a time limit of 30 minutes (-t), one processor (-c), a max memory of 0.5Gb [500] (--mem), and then finally, specifying a shell to run in a terminal ("--pty" option). Run this command to get to a compute node when you want to run jobs on the command-line directly.
-
-<div class="output">srun: job 29390113 queued and waiting for resources
-srun: job 29390113 has been allocated resources
-groups: cannot find name for group ID 2020
-bash: /home/msettles/.bashrc: Permission denied
-msettles@drove-13:~$
-</div>
-
-You safely ignore the working and error. Notice that we are no longer on tadpole, but are now on drove-13 in this example, one of our compute nodes.
-
-use Exit on the command line to exit the session
-
-    exit
-
----
-**2b\.** ['sbatch'](https://slurm.schedmd.com/sbatch.html) is used to submit jobs to run on the cluster. Typically it is used to run many jobs via the scheduler non-interactively. Look at the options for sbatch:
+['sbatch'](https://slurm.schedmd.com/sbatch.html) is used to submit jobs to run on the cluster. Typically it is used to run many jobs via the scheduler non-interactively. Look at the options for sbatch:
 
     sbatch --help
 
@@ -605,8 +361,9 @@ The non slurm version is the [template.sh](../software_scripts/scripts/template.
 
 After finishing you will see two new files in the directory stdout.out and stderr.err where stdout and stderr (respectively) were redirected to.
 
----
-**2c\.** ['squeue'](https://slurm.schedmd.com/squeue.html) is to list your currently queued/running jobs. T
+### squeue: view queued jobs
+
+['squeue'](https://slurm.schedmd.com/squeue.html) is to list your currently queued/running jobs. T
 
     squeue --help
 
@@ -621,7 +378,9 @@ Looking at the help documentation, we see that we can filter the results based o
 
 You can see the job has been running (ST=R) for 6 seconds (TIME=0:06) on node drove-12. The jobid (here 29390121) can be used to cancel the job later, or get additional job information.
 
-**2d\.** 'scancel' command is used to cancel jobs (either running or in queue).
+### scancel: cancel queued or running jobs
+
+'scancel' command is used to cancel jobs (either running or in queue).
 
 You can give it a job ID, or if you use the "-u" option with your username, you can cancel all of your jobs at once.
 
@@ -629,15 +388,49 @@ You can give it a job ID, or if you use the "-u" option with your username, you 
 
 will cancel the above job if its still running.
 
-**2e\.** 'sacct' command is used to get accounting data for any job that has ever run, using the job ID.
+## Quiz 1
 
-To get statistics on completed jobs by jobID (replace jobid with your jobid):
+<div id="quiz1" class="quiz"></div>
+<button id="submit1">Submit Quiz</button>
+<div id="results1" class="output"></div>
+<script>
+quizContainer1 = document.getElementById('quiz1');
+resultsContainer1 = document.getElementById('results1');
+submitButton1 = document.getElementById('submit1');
 
-    sacct -j jobid --format=JobID,JobName,MaxRSS,Elapsed
+myQuestions1 = [
+  {
+    question: "What does the -h option for the ls command do?",
+    answers: {
+      a: "Creates a hard link to a file",
+      b: "Shows the file sizes in a human readable format",
+      c: "Shows the help page",
+      d: "Recursively lists directories"
+    },
+    correctAnswer: "b"
+  },
+  {
+    question: "What does the -l option for ls do?",
+    answers: {
+      a: "Produces a listing of all the links",
+      b: "Produces a time stamp sorted list",
+      c: "Produces a log file",
+      d: "Produces a detailed format list"
+    },
+    correctAnswer: "d"
+  },
+  {
+    question: "Which option turns off the default sort in the ls output?",
+    answers: {
+      a: "-U",
+      b: "-t",
+      c: "--hide",
+      d: "-H"
+    },
+    correctAnswer: "a"
+  }
+];
 
-To view the same information for all jobs of a user (replace username with your username):
-
-    sacct -u username --format=JobID,JobName,MaxRSS,Elapsed
-
-
-**You can get more information about each command by typing "<command> --help" or by looking at [this summary page](https://slurm.schedmd.com/pdfs/summary.pdf).**
+buildQuiz(myQuestions1, quizContainer1);
+submitButton1.addEventListener('click', function() {showResults(myQuestions1, quizContainer1, resultsContainer1);});
+</script>
