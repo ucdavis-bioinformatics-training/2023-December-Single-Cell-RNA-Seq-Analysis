@@ -158,7 +158,7 @@ By default, files within the present working directory are displayed. The ls com
 
 Many commands, including ls, have numerous options that can be specified using a "-" character. The "-lh" in the example below provides an extended output with human-readable file sizes.
 
-    ls -lh /usr/bin
+    ls -lh /share/genomes/
 
 
 ### Creating files: mkdir, cp, and ln
@@ -185,7 +185,7 @@ The cp command copies files, or, when using the -r option, directories. This com
 Instead of duplicating raw data and other large files, it is typical to create symbolic links. The resulting symbolic link can be treated as a copy of the file.
 
     ln -s /share/workshop/scrna_workshop/Data/example.sam .
-    ln -s /share/workshop/scrna_workshop/Data/example.fastq.gz
+    ln -s /share/workshop/scrna_workshop/Data/example.fastq.gz .
     ls -lh
 
 
@@ -197,7 +197,7 @@ A number of commands are available to inspect the content of a file.
 
 The less command provides a paged reader view of the specified file. Advance through the file with the spacebar, or the down arrow, and move backwards by pressing "b" or the up arrow. The -S option prevents line wrapping.
 
-    ls -S example.sam
+    less -S example.sam
 
 Take a few minutes to get comfortable with the less reader interface. To exit the reader view, press "q". Further options and tools for navigating within less are provided by the manual, which can be accessed using the man command: `man less`
 
@@ -209,7 +209,7 @@ Compressed files are not human-readable. To view a gzipped file in a paged reade
 
 The cat command prints the content of any file(s) provided as arguments to the screen, concatenating them if more than one is present. As with less/zless above, zcat is designed to operate on gzipped files, printing uncompressed data without uncompressing the file itself.
 
-    cat example.sam
+    cat example.sam # use control-C to escape!
     zcat example.fastq.gz
 
 Why would this be useful? The output of one command can be sent to another command as input using the "pipe" character, as you'll see below. Sometimes commands that may seem pointless in isolation are unexpectedly powerful when linked together with pipes.
@@ -220,6 +220,9 @@ Sometimes viewing just the beginning or end of a file is sufficient. In those ca
 
     head example.sam
     tail example.sam
+
+The pipe character "|" allows you to provide the output from one command as input to the next.
+
     zcat example.fastq.gz | head
     zcat example.fastq.gz | head --lines 4 | tail --lines 1
 
@@ -238,7 +241,7 @@ When a command is typed on the command line, the operating system searches for a
 
 The path can be modified in a number of ways.
 
-    export $PATH
+    export PATH=/share/workshop/scrna_workshop/Software/cellranger-7.1.0/bin:$PATH
     echo $PATH
 
 The module command also modifies the path, adding directories containing the executables associated with user-installed software to the path temporarily.
@@ -264,13 +267,13 @@ The nano text editor now occupies the whole screen; commands to find, replace, e
 
 The "#!" at the beginning of a script tells the shell what language to use to interpret the rest of the script. In our case, we will be writing "bash" commands, so we specify the full path of the bash executable after the "#!".
 
-The rest of the lines contain either executable code or comments. Any text after a "#" is ignored by the interpreter. Make any changes you like to the code, hit Cntl-O and then enter to save the file, and then Cntl-X to exit nano.
+The rest of the lines contain either executable code or comments. Any text after a "#" is ignored by the interpreter. Make any changes you like to the code, hit Cntl-O **and then enter** to save the file, and then Cntl-X to exit nano.
 
 Though there are ways to run the commands in test.sh right now, it's generally useful to give yourself (and others) 'execute' permissions for test.sh, really making it a shell script. Note the characters in the first (left-most) field of the file listing:
 
     ls -lh template.sh
 
-<div class="output">-rw-rw-r-- 1 msettles biocore 79 Aug 19 15:05 template.sh
+<div class="output">-rw-rw-r-- 1 hslyman workshop 287 Jul 12 16:23 template.sh
 </div>
 
 
@@ -279,7 +282,7 @@ The first '-' becomes a 'd' if the 'file' is actually a directory. The next thre
     chmod ug+x template.sh
     ls -lh template.sh
 
-<div class="output">-rwxr-xr-- 1 msettles biocore 79 Aug 19 15:05 template.sh
+<div class="output">-rwxrwxr-- 1 hslyman workshop 287 Jul 12 16:23 template.sh
 </div>
 
 The first 10 characters of the output represent the file and permissions.
@@ -290,13 +293,13 @@ The first character is the file type, the next three sets of three represent the
 
 Run the script. We have to provide a relative reference to the script './' because its not on our path.
 
-    ./test.sh
+    ./template.sh
 
 ## Interacting with a scheduler
 
 Many institutions maintain computing clusters for bioinformatics and other forms of data analysis. A cluster is typically a shared resource consisting of one or more head nodes, and a large number of compute nodes.
 
-![figures/cluster_diagram.png]
+![cluster diagram](figures/cluster_diagram.png)
 
 Users log into a head node (like tadpole) to perform simple operations and to submit more complex, resource intensive jobs, which will be run on the compute nodes. **It is important to avoid running large tasks that may take a great deal of memory or CPU power on a head node**; using head node resources for running jobs prevents other users from successfully performing simply operations like changing directories, editing scripts, and submitting jobs.
 
@@ -313,7 +316,11 @@ There are several more commands available to interact with Slurm, each of which 
 
 ### sbatch: submit a batch job
 
-['sbatch'](https://slurm.schedmd.com/sbatch.html) is used to submit jobs (or arrays of jobs) to run on the cluster non-interactively.
+Frequently, bioinformatic jobs are run non-interactively on the cluster using a "batch" job. This is typically done by submitting a script to the scheduler to be run when resources are allocated. Within Slurm, the command used for batch job submissions is ['sbatch'](https://slurm.schedmd.com/sbatch.html).
+
+Copy a template Slurm batch script:
+
+    cp /share/workshop/scrna_workshop/Scripts/template.slurm .
 
 While it is possible to specify options for sbatch on the command line, we typically include them within the script instead. This practice is both convenient and repeatable, as it saves any parameters given to the scheduler along with the code run.
 
@@ -352,13 +359,10 @@ echo Time taken: $elapsed
 
 The first line tells sbatch what scripting language (bash here) the rest of the file is in. Any line that begins with a "#" symbol is ignored by the bash interpreter, those lines that begin with "#SBATCH" are used by the slurm controller. Those lines are for specifying sbatch options without having to type them on the command-line every time. In this script, on the next set of lines, we've put some code for calculating the time elapsed for the job and then we simply wait for 5 minutes (300 seconds) and exit. Lets try running it
 
-
-    cd /share/workshop/intro_scrnaseq/$USER
-    cp /share/workshop/intro_scrnaseq/Software/Scripts/template.slurm .
     cat template.slurm
     sbatch template.slurm
 
-After finishing you will see two new files in the directory where stdout and stderr were redirected to.
+Running template.slurm creates two new files in the directory, which contain the stdout and stderr resulting from the script. This job creates no other output files.
 
 ### squeue: view queued jobs
 
@@ -407,7 +411,7 @@ submitButton1 = document.getElementById('submit1');
 
 myQuestions1 = [
   {
-    question: "Which of the following is **not** a method of advancing through a file in less/zless?",
+    question: "Which of the following is not a method of advancing through a file in less/zless?",
     answers: {
       a: "Space bar",
       b: "b",
