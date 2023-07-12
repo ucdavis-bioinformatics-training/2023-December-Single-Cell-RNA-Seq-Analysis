@@ -98,7 +98,7 @@ In general, the only input to the command line is the keyboard. Point and click 
 
 When you open a terminal, you will see a *prompt*. This is composed of the username, host (tadpole), and working directory. Commands are run by typing the name of the command, any options or arguments.
 
-![figures/prompt_20230710.png]
+![syntax of a command](figures/prompt_20230710.png)
 
 ## Command line basics
 
@@ -313,27 +313,28 @@ There are several more commands available to interact with Slurm, each of which 
 
 ### sbatch: submit a batch job
 
-['sbatch'](https://slurm.schedmd.com/sbatch.html) is used to submit jobs to run on the cluster. Typically it is used to run many jobs via the scheduler non-interactively. Look at the options for sbatch:
+['sbatch'](https://slurm.schedmd.com/sbatch.html) is used to submit jobs (or arrays of jobs) to run on the cluster non-interactively.
 
-    sbatch --help
+While it is possible to specify options for sbatch on the command line, we typically include them within the script instead. This practice is both convenient and repeatable, as it saves any parameters given to the scheduler along with the code run.
 
-Generally, we do not use any options for sbatch ... we typically give it a script (i.e. a text file with commands inside) to run. Let's take a look at a template script [template.slurm](../software_scripts/scripts/template.slurm):
+Lines beginning with "#SBATCH" will be passed as arguments to the sbatch command. Examine the template script template.slurm to see the following example:
 
-<pre class="prettyprint"><code class="language-sh" style="background-color:333333">#!/bin/bash
+<pre class="prettyprint"><code class="language-sh" style="background-color:333333">
+#!/bin/bash
 # options for sbatch
 #SBATCH --job-name=name # Job name
 #SBATCH --nodes=1 # should never be anything other than 1
 #SBATCH --ntasks=1 # number of cpus to use
-#SBATCH --time=30 # Acceptable time formats include "minutes", "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds".
+#SBATCH --time=10 # Acceptable time formats include "minutes", "minutes:seconds", "hours:minutes:seconds", "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds".
 #SBATCH --mem=500 # Memory pool for all cores (see also --mem-per-cpu)
 #SBATCH --partition=production # cluster partition
 #SBATCH --account=workshop # cluster account to use for the job
-#SBATCH --reservation=scworkshop # cluster account reservation
-##SBATCH --array=1-16 # Task array indexing, see https://slurm.schedmd.com/job_array.html, the double # means this line is commented out
-#SBATCH --output=stdout.out # File to which STDOUT will be written
-#SBATCH --error=stderr.err # File to which STDERR will be written
-#SBATCH --mail-type=ALL
-#SBATCH --mail-user=myemail@email.com
+#SBATCH --reservation=workshop # cluster account reservation
+#SBATCH --array=1 # Task array indexing, see https://slurm.schedmd.com/job_array.html
+#SBATCH --output=template-%A-%a.out # File to which STDOUT will be written
+#SBATCH --error=template-%A-%a.err # File to which STDERR will be written
+#SBATCH --mail-type=END # when to email user: END, FAIL, ALL, and others. See https://slurm.schedmd.com/sbatch.html
+#SBATCH --mail-user=myemail@email.com # edit to receive email from the scheduler
 
 # for calculating the amount of time the job takes and echo the hostname
 begin=`date +%s`
@@ -353,21 +354,27 @@ The first line tells sbatch what scripting language (bash here) the rest of the 
 
 
     cd /share/workshop/intro_scrnaseq/$USER
-    wget https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2022-July-Single-Cell-RNA-Seq-Analysis/main/software_scripts/scripts/template.slurm template.slurm
+    cp /share/workshop/intro_scrnaseq/Software/Scripts/template.slurm .
     cat template.slurm
     sbatch template.slurm
 
-The non slurm version is the [template.sh](../software_scripts/scripts/template.sh) script. You'll notice it looks the same only missing the #SBATCH commands.
-
-After finishing you will see two new files in the directory stdout.out and stderr.err where stdout and stderr (respectively) were redirected to.
+After finishing you will see two new files in the directory where stdout and stderr were redirected to.
 
 ### squeue: view queued jobs
 
-['squeue'](https://slurm.schedmd.com/squeue.html) is to list your currently queued/running jobs. T
+['squeue'](https://slurm.schedmd.com/squeue.html) is used to list currently queued and running jobs.
 
-    squeue --help
+A number of options allow users to filter the results; the most useful of these is "-u", which narrows the results to jobs associated with the provided user ID. The output is a table containing a summary of all jobs meeting the specified criteria.
 
-Looking at the help documentation, we see that we can filter the results based on a number of criteria. The most useful option is "-u", which you can use to see just the jobs for a particular user ID. The first column gives you the job ID of the job, the second is the partition (different queues for different types of machines), the name of the job, the user who ran the job, the state of the job (R is for running), the length of time the job has been running, the number of nodes the job is using, and finally, the node name where the job is running or a reason why the job is waiting.
+The columns are:
+* job ID
+* partition (different queues for different types of machines)
+* job name
+* ID of user who submitted the job
+* state of the job (R for running, PD for pending)
+* length of time the job has been running
+* the number of nodes the job is using
+* node name where the job is running or a reason why the job is waiting
 
     squeue -u $USER
 
@@ -380,13 +387,13 @@ You can see the job has been running (ST=R) for 6 seconds (TIME=0:06) on node dr
 
 ### scancel: cancel queued or running jobs
 
-'scancel' command is used to cancel jobs (either running or in queue).
+The 'scancel' command is used to cancel specified jobs (either running or queued).
 
-You can give it a job ID, or if you use the "-u" option with your username, you can cancel all of your jobs at once.
+Jobs may be specified by ID number, or if you use the "-u" option with your username, you can cancel all of your jobs at once.
 
-    scancel 29390121
+    scancel 29390121 # cancels the job if still running
+    scancel $USER # cancels all of your jobs
 
-will cancel the above job if its still running.
 
 ## Quiz 1
 
@@ -400,32 +407,32 @@ submitButton1 = document.getElementById('submit1');
 
 myQuestions1 = [
   {
-    question: "What does the -h option for the ls command do?",
+    question: "Which of the following is **not** a method of advancing through a file in less/zless?",
     answers: {
-      a: "Creates a hard link to a file",
-      b: "Shows the file sizes in a human readable format",
-      c: "Shows the help page",
-      d: "Recursively lists directories"
+      a: "Space bar",
+      b: "b",
+      c: "Down arrow",
+      d: "j"
     },
     correctAnswer: "b"
   },
   {
-    question: "What does the -l option for ls do?",
+    question: "What is the difference between head and cat?",
     answers: {
-      a: "Produces a listing of all the links",
-      b: "Produces a time stamp sorted list",
-      c: "Produces a log file",
-      d: "Produces a detailed format list"
+      a: "cat opens a file in a paged reader",
+      b: "head is intended to be used on gzipped files",
+      c: "cat displays the last five lines of the file",
+      d: "head prints the beginning of the file"
     },
     correctAnswer: "d"
   },
   {
-    question: "Which option turns off the default sort in the ls output?",
+    question: "Which of the following will list the contents of the directory one level above the present working directory?",
     answers: {
-      a: "-U",
-      b: "-t",
-      c: "--hide",
-      d: "-H"
+      a: "ls ..",
+      b: "pwd",
+      c: "ls -lh",
+      d: "ls /"
     },
     correctAnswer: "a"
   }

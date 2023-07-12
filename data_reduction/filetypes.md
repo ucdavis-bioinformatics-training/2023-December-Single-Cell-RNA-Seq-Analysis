@@ -5,7 +5,7 @@ The primary file types you'll see related to DNA sequence analysis are:
 * [fasta](#fasta)
 * [fastq](#fastq)
 * [gtf/gff](#Annotation-based-file-types)
-* [sam/bam/cram](#Alignment-based-file-types)
+* [sam/bam/cram](#Alignment-based-file-types:-SAM,-BAM,-and-CRAM)
 
 ## Sequence based file types
 Sequence based files first started out as fasta with paired qual files (Sanger and 454). As Illumina sequencing and quality scores grew more common, the fastq file became the default output from DNA sequencers. These days additional file types are being used, including fast5 by Oxford Nanopore and 'unmapped' bam files by Pacific Biosciences.
