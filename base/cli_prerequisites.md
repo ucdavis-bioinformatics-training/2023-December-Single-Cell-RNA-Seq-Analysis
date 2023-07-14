@@ -221,7 +221,7 @@ Sometimes viewing just the beginning or end of a file is sufficient. In those ca
     head example.sam
     tail example.sam
 
-The pipe character "|" allows you to provide the output from one command as input to the next.
+The pipe character "\|" allows you to provide the output from one command as input to the next.
 
     zcat example.fastq.gz | head
     zcat example.fastq.gz | head --lines 4 | tail --lines 1
@@ -259,7 +259,7 @@ You will be prompted to input your password. Don't forget to replace "username" 
 
 ## Shell scripts
 
-Often it's useful to define a whole string of commands to run on some input, so that (1) you can be sure you're running the same commands on all data, and (2) so you don't have to type the same commands in over and over. Let's use the 'nano' text editor program that's pretty reliably installed on most linux systems.
+Often it's useful to define a whole string of commands to run on some input, so that (1) you can be sure you're running the same commands on all data, and (2) so you don't have to type the same commands in over and over. **On the cluster**, let's use the 'nano' text editor program that's pretty reliably installed on most linux systems.
 
     nano template.sh
 
@@ -301,7 +301,7 @@ Many institutions maintain computing clusters for bioinformatics and other forms
 
 ![cluster diagram](figures/cluster_diagram.png)
 
-Users log into a head node (like tadpole) to perform simple operations and to submit more complex, resource intensive jobs, which will be run on the compute nodes. **It is important to avoid running large tasks that may take a great deal of memory or CPU power on a head node**; using head node resources for running jobs prevents other users from successfully performing simply operations like changing directories, editing scripts, and submitting jobs.
+Users log into a head node (like tadpole) to perform simple operations and to submit more complex, resource intensive jobs, which will be run on the compute nodes. **It is important to avoid running large tasks that may take a great deal of memory or CPU power on a head node**; using head node resources for running jobs prevents other users from successfully performing simple operations like changing directories, editing scripts, and submitting jobs.
 
 A computing cluster like the one we're using for this workshop is commonly administered by a scheduler, which balances the demands on the cluster to allocate resources to competing jobs as efficiently as possible.
 
@@ -411,7 +411,7 @@ submitButton1 = document.getElementById('submit1');
 
 myQuestions1 = [
   {
-    question: "Which of the following is not a method of advancing through a file in less/zless?",
+    question: "Which of the following is NOT a method of advancing through a file in less/zless?",
     answers: {
       a: "Space bar",
       b: "b",
