@@ -2,7 +2,9 @@
 title: "R and RStudio Prerequisites"
 author: "UC Davis Bioinformatics Core"
 date: "`r Sys.Date()`"
-output: html_document
+output:
+  html_document:
+    keep_md: TRUE
 ---
 
 ```{r setup, include=FALSE}
