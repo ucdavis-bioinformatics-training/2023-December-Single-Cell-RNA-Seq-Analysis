@@ -1,0 +1,177 @@
+---
+title: "Introduction to Single Cell RNAseq Part 3: Normalize and scale"
+author: "UCD Bioinformatics Core"
+output:
+    html_document:
+      keep_md: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+Last Updated: June 19, 2023
+
+# Part 3: Normalize and scale data
+
+In this workshop, we are using the filtered feature barcode matrix. While this lowers the likelihood of encountering barcodes that are not cell-associated within our expression matrix, it is still good practice to perform quality assurance / control on the experiment.
+
+# Setup
+
+First, we need to load the required libraries.
+
+```{r libraries}
+library(Seurat)
+library(biomaRt)
+```
+
+```{r readRDS}
+experiment.aggregate <- readRDS("scRNA_workshop-02.rds")
+experiment.aggregate
+```
+
+```{r seed}
+set.seed(12345)
+```
+
+
+# Normalize the data
+
+After filtering, the next step is to normalize the data. We employ a global-scaling normalization method LogNormalize that normalizes the gene expression measurements for each cell by the total expression, multiplies this by a scale factor (10,000 by default), and then log-transforms the data.
+
+```{r normalize_help, eval=FALSE}
+?NormalizeData
+```
+
+```{r normalize}
+experiment.aggregate <- NormalizeData(
+  object = experiment.aggregate,
+  normalization.method = "LogNormalize",
+  scale.factor = 10000)
+```
+
+# Cell cycle assignment
+Cell cycle phase can be a significant source of variation in single cell and single nucleus experiments. There are a number of automated cell cycle stage detection methods available for single cell data. For this workshop, we will be using the built-in Seurat cell cycle function, `CellCycleScoring`. This tool compares gene expression in each cell to a list of cell cycle marker genes and scores each barcode based on marker expression. The phase with the highest score is selected for each barcode. Seurat includes a list of cell cycle genes in human single cell data.
+
+```{r human_gene_list}
+s.genes <- cc.genes$s.genes
+g2m.genes <- cc.genes$g2m.genes
+```
+
+For other species, a user-provided gene list may be substituted, or the orthologs of the human gene list used instead.
+
+**Do not run the code below for human experiments!**
+```{r convert_list_mouse, eval=FALSE}
+# mouse code DO NOT RUN for human data
+convertHumanGeneList <- function(x){
+  require("biomaRt")
+  human = useEnsembl("ensembl",
+                     dataset = "hsapiens_gene_ensembl",
+                     mirror = "uswest")
+  mouse = useEnsembl("ensembl",
+                     dataset = "mmusculus_gene_ensembl",
+                     mirror = "uswest")
+  genes = getLDS(attributes = c("hgnc_symbol"),
+                 filters = "hgnc_symbol",
+                 values = x ,
+                 mart = human,
+                 attributesL = c("mgi_symbol"),
+                 martL = mouse,
+                 uniqueRows=T)
+  humanx = unique(genes[, 2])
+  print(head(humanx)) # print first 6 genes found to the screen
+  return(humanx)
+}
+# convert lists to mouse orthologs
+s.genes <- convertHumanGeneList(cc.genes.updated.2019$s.genes)
+g2m.genes <- convertHumanGeneList(cc.genes.updated.2019$g2m.genes)
+```
+
+Once an appropriate gene list has been identified, the `CellCycleScoring` function can be run.
+
+```{r CellCycleScoring}
+experiment.aggregate <- CellCycleScoring(experiment.aggregate,
+                                         s.features = s.genes,
+                                         g2m.features = g2m.genes,
+                                         set.ident = TRUE)
+table(experiment.aggregate@meta.data$Phase) %>%
+  kable(caption = "Number of Cells in each Cell Cycle Stage",
+        col.names = c("Stage", "Count"),
+        align = "c") %>%
+  kable_styling()
+rm(s.genes, g2m.genes)
+```
+
+Because the "set.ident" argument was set to TRUE (this is also the default behavior), the active identity of the Seurat object was changed to the phase. To return the active identity to the sample identity, use the `Idents` function.
+
+```{r update_ident}
+table(Idents(experiment.aggregate))
+Idents(experiment.aggregate) <- "orig.ident"
+table(Idents(experiment.aggregate))
+```
+
+
+# Identify variable genes
+
+The function FindVariableFeatures identifies the most highly variable genes (default 2000 genes) by fitting a line to the relationship of log(variance) and log(mean) using loess smoothing, uses this information to standardize the data, then calculates the variance of the standardized data.  This helps avoid selecting genes that only appear variable due to their expression level.
+
+```{r find_variable_genes_help, eval=FALSE}
+?FindVariableFeatures
+```
+
+```{r find_variable_genes}
+experiment.aggregate <- FindVariableFeatures(
+  object = experiment.aggregate,
+  selection.method = "vst")
+length(VariableFeatures(experiment.aggregate))
+
+top10 <- head(VariableFeatures(experiment.aggregate), 10)
+top10
+
+vfp1 <- VariableFeaturePlot(experiment.aggregate)
+vfp1 <- LabelPoints(plot = vfp1, points = top10, repel = TRUE)
+vfp1
+```
+
+**How do the results change if you use selection.method = "dispersion" or selection.method = "mean.var.plot"?**
+
+FindVariableFeatures isn't the only way to set the "variable features" of a Seurat object. Another reasonable approach is to select a set of "minimally expressed" genes.
+
+```{r minimally_expressed_genes}
+min.value <- 2
+min.cells <- 10
+
+num.cells <- Matrix::rowSums(GetAssayData(experiment.aggregate, slot = "count") > min.value)
+genes.use <- names(num.cells[which(num.cells >= min.cells)])
+length(genes.use)
+
+VariableFeatures(experiment.aggregate) <- genes.use
+rm(min.value, min.cells, num.cells, genes.use)
+```
+
+
+# Scale the data
+
+The `ScaleData` function scales and centers genes in the dataset. If variables are provided with the "vars.to.regress" argument, they are individually regressed against each gene, and the resulting residuals are then scaled and centered unless otherwise specified. We regress out cell cycle results S.Score and G2M.Score, mitochondrial RNA level (percent_MT), and the number of features (nFeature_RNA) as a proxy for sequencing depth.
+
+```{r ScaleData}
+experiment.aggregate <- ScaleData(experiment.aggregate,
+                                  vars.to.regress = c("S.Score", "G2M.Score", "percent_MT", "nFeature_RNA"))
+```
+
+# Prepare for the next section
+
+## Save object
+```{r}
+saveRDS(experiment.aggregate, file = "scRNA_workshop-03.rds")
+```
+
+## Download Rmd
+```{r}
+download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/04-dimensionality_reduction.Rmd", "03-dimensionality_reduction.Rmd")
+```
+
+## Session Information
+```{r session_info, warning=FALSE,error=FALSE,message=FALSE}
+sessionInfo()
+```

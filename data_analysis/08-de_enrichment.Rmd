@@ -1,0 +1,111 @@
+---
+title: "Single Cell RNAseq Part 8: Enrichment and model-based differential expression"
+author: "Bioinformatics Core"
+date: "`r Sys.Date()`"
+output:
+    html_document:
+      keep_md: TRUE
+      toc: TRUE
+---
+
+```{r setup_opt, include=FALSE}
+options(width = 450, error = FALSE, warning = FALSE, message = FALSE)
+```
+
+## Load libraries
+```{r load_library}
+library(Seurat)
+library(limma)
+library(topGO)
+library(HGNChelper)
+library(dplyr)
+```
+
+## Load the Seurat object
+```{r load_rdata}
+experiment.merged <- readRDS("scRNA_workshop_4.rds")
+experiment.merged
+Idents(experiment.merged) <- "finalcluster"
+```
+
+# 1. Gene Ontology (GO) Enrichment of Genes Expressed in a Cluster
+[Gene Ontology](http://geneontology.org/docs/ontology-documentation/) provides a controlled vocabulary for describing gene products.  Here we use enrichment analysis to identify GO terms that are overrepresented among the gene expressed in cells in a given cluster. 
+
+```{r GO}
+cluster10 <- subset(experiment.merged, idents = '10')
+expr <- as.matrix(GetAssayData(cluster10))
+
+# Select genes that are expressed > 0 in at least half of cells
+n.gt.0 <- apply(expr, 1, function(x)length(which(x > 0)))
+expressed.genes <- rownames(expr)[which(n.gt.0/ncol(expr) >= 0.5)]
+all.genes <- rownames(expr)
+
+# define geneList as 1 if gene is in expressed.genes, 0 otherwise
+geneList <- ifelse(all.genes %in% expressed.genes, 1, 0)
+names(geneList) <- all.genes
+
+# Create topGOdata object
+	GOdata <- new("topGOdata",
+		ontology = "BP", # use biological process ontology
+		allGenes = geneList,
+		geneSelectionFun = function(x)(x == 1),
+              annot = annFUN.org, mapping = "org.Hs.eg.db", ID = "symbol")
+# Test for enrichment using Fisher's Exact Test
+	resultFisher <- runTest(GOdata, algorithm = "elim", statistic = "fisher")
+	GenTable(GOdata, Fisher = resultFisher, topNodes = 20, numChar = 60)
+```
+* Annotated: number of genes (out of all.genes) that are annotated with that GO term
+* Significant: number of genes that are annotated with that GO term and meet our criteria for "expressed"
+* Expected: Under random chance, number of genes that would be expected to be annotated with that GO term and meeting our criteria for "expressed"
+* Fisher: (Raw) p-value from Fisher's Exact Test
+
+# 2. Model-based DE analysis in limma
+[limma](https://bioconductor.org/packages/release/bioc/html/limma.html) is an R package for differential expression analysis of bulk RNASeq and microarray data.  We apply it here to single cell data.
+
+Limma can be used to fit any linear model to expression data and is useful for analyses that go beyond two-group comparisons.  A detailed tutorial of model specification in limma is available [here](https://ucdavis-bioinformatics-training.github.io/2021-June-RNA-Seq-Analysis/data_analysis/DE_Analysis_mm_with_quizzes) and in the [limma User's Guide](https://www.bioconductor.org/packages/devel/bioc/vignettes/limma/inst/doc/usersguide.pdf).
+
+```{r}
+# filter genes to those expressed in at least 10% of cells
+keep <- rownames(expr)[which(n.gt.0/ncol(expr) >= 0.1)]
+expr2 <- expr[keep,]
+
+# Set up "design matrix" with statistical model
+cluster10$proper.ident <- make.names(cluster10$orig.ident)
+mm <- model.matrix(~0 + proper.ident + S.Score + G2M.Score + percent_MT + nFeature_RNA, data = cluster10[[]])
+head(mm)
+tail(mm)
+
+# Fit model in limma
+fit <- lmFit(expr2, mm)
+head(coef(fit))
+
+# Test 'B001-A-301' - 'A001-C-007'
+contr <- makeContrasts(proper.identB001.A.301 - proper.identA001.C.007, levels = colnames(coef(fit)))
+contr
+fit2 <- contrasts.fit(fit, contrasts = contr)
+fit2 <- eBayes(fit2)
+out <- topTable(fit2, n = Inf, sort.by = "P")
+head(out, 30)
+```
+
+### Output columns:
+* logFC: log fold change (since we are working with Seurat's natural log transformed data, will be natural log fold change)
+* AveExpr: Average expression across all cells in expr2
+* t: logFC divided by its standard error
+* P.Value: Raw p-value (based on t) from test that logFC differs from 0
+* adj.P.Val: Benjamini-Hochberg false discovery rate adjusted p-value
+* B: log-odds that gene is DE 
+
+
+
+# Save files and prepare to knit
+
+```{r}
+download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2022-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/scRNA_Workshop-PART6.Rmd", "scRNA_Workshop-PART6.Rmd")
+```
+
+                 
+## Session Information
+```{r session_info, warning=FALSE,error=FALSE,message=FALSE}
+sessionInfo()
+```

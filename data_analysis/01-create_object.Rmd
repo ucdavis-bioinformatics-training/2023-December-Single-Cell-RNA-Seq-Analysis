@@ -1,0 +1,165 @@
+---
+title: "Introduction to Single Cell RNAseq Part 1: Create Seurat Object"
+author: "UCD Bioinformatics Core"
+date: "`r Sys.Date()`"
+output:
+    html_document:
+      keep_md: TRUE
+      toc: TRUE
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+```
+
+Our first Markdown document concentrates on getting data into R and setting up our initial object. We will start each section by loading the libraries necessary for that portion of the analysis.
+
+```{r libraries}
+library(Seurat)     # single cell RNA-Seq analysis
+library(kableExtra) # format tables
+library(ggplot2)   # create graphics
+library(viridis)   # accessible color palettes
+```
+
+# Experiment metadata
+
+The metadata we have available for this subset of the Becker experiment is very basic; we don't have a record of patient identifiers, biopsy dates, treatment course, or prognosis. Instead, for each sample, we know the group (healthy, polyp, or cancerous tissue) and the sequencing run (this can be derived from the read header). Let's create a data table containing this information.
+
+```{r}
+experiment.metadata <- data.frame(id = c("A001-C-007",
+                                         "A001-C-104",
+                                         "B001-A-301"),
+                                  group = c("Colorectal Cancer",
+                                            "Polyp",
+                                            "Normal"),
+                                  run = c("A00509:126:HTLFWDMXX:1",
+                                          "A00509:116:HTLNJDMXX:1",
+                                          "A00509:113:HTNCWDMXX:1"))
+experiment.metadata
+```
+
+# Create metrics tables
+
+The **expression_data_cellranger.zip** file that we have downloaded in previous step contains the single cell matrix files and HDF5 files for three single nuclei RNASeq samples from [Becker et al., 2022](https://www.nature.com/articles/s41588-022-01088-x). After un-compressing the file, please make sure that you see three folders: A001-C-007, A001-C-104 and B001-A-301 in the same folder as this R markdown file.
+
+In this section, the metrics_summary.csv files produced by Cellranger are used to create a single table summarizing the sequencing metrics for each sample.
+
+```{r experiment_setup}
+experiment.name <- "Becker 2022 colorectal cancer continuum"
+dataset.loc <- "./"
+```
+
+```{r read_metrics}
+sample.metrics <- lapply(experiment.metadata$id, function(id){
+  metrics = read.csv(file.path(dataset.loc,
+                               paste0(id,"/outs"),
+                               "metrics_summary.csv"),
+                     colClasses = "character")
+})
+experiment.metrics <- do.call("rbind", sample.metrics)
+rownames(experiment.metrics) <- sample.ids
+
+sequencing.metrics <- data.frame(t(experiment.metrics[,c(1:19)]))
+
+rownames(sequencing.metrics) <- gsub("\\."," ", rownames(sequencing.metrics))
+
+sequencing.metrics %>%
+  kable(caption = 'Cell Ranger Results') %>%
+  pack_rows("Overview", 1, 3, label_row_css = "background-color: #666; color: #fff;") %>%
+  pack_rows("Sequencing Characteristics", 4, 9, label_row_css = "background-color: #666; color: #fff;") %>%
+  pack_rows("Mapping Characteristics", 10, 19, label_row_css = "background-color: #666; color: #fff;") %>%
+  kable_styling("striped")
+rm(sample.metrics, experiment.metrics, sequencing.metrics)
+```
+
+# Create Seurat object
+
+[Seurat](http://satijalab.org/seurat/) (now Version 4) is a popular R package that is designed for QC, analysis, and exploration of single cell data. Seurat aims to enable users to identify and interpret sources of heterogeneity from single cell transcriptomic measurements, and to integrate diverse types of single cell data. Further, the authors provide several [tutorials](https://satijalab.org/seurat/vignettes.html), on their website.
+
+First we read in data from each individual sample folder.
+
+```{r load_data_hdf5}
+expression.data <- lapply(sample.ids, function(id){
+  sample.matrix = Read10X_h5(file.path(dataset.loc, id, "/outs","filtered_feature_bc_matrix.h5"))
+  colnames(sample.matrix) = paste(sapply(strsplit(colnames(sample.matrix),split="-"), '[[', 1L), id, sep="_")
+  sample.matrix
+})
+names(expression.data) <- sample.ids
+
+str(expression.data)
+```
+
+The `CreateSeuratObject` function allows feature (gene) and cell filtering by minimum cell and feature counts. We will set these to 0 for now in order to explore manual filtering more fully in part 2.
+
+```{r create_seurat_object}
+aggregate.data <- do.call("cbind", expression.data)
+
+experiment.aggregate <- CreateSeuratObject(
+  aggregate.data,
+  project = experiment.name,
+  min.cells = 0,
+  min.features = 0,
+  names.field = 2, # tells Seurat which part of the cell identifier contains the sample name
+  names.delim = "\\_")
+
+experiment.aggregate
+str(experiment.aggregate)
+rm(expression.data, aggregate.data)
+```
+
+A Seurat object is a complex data structure containing the data from a single cell or single nucleus assay and **all** of the information associated with the experiment, including annotations, analysis, and more. This data structure was developed by the authors of the Seurat analysis package, for use with their pipeline.
+
+Most Seurat functions take the object as an argument, and return either a new Seurat object or a ggplot object (a visualization). As the analysis continues, more and more data will be added to the object.
+
+```{r explore_object_1}
+slotNames(experiment.aggregate)
+experiment.aggregate@assays # a slot is accessed with the @ symbol
+```
+
+- Which slots are empty, and which contain data?
+- What type of object is the content of the meta.data slot?
+- What metadata is available?
+
+There is often more than one way to interact with the information stored in each of a Seurat objects many slots. The default behaviors of different access functions are described in the help documentation.
+
+```{r explore_object_2}
+# which slot is being accessed here? find another way to produce the result
+head(experiment.aggregate[[]])
+```
+
+The use of syntax is often a matter of personal preference. In the interest of clarity, this documentation will generally use the more explicit syntax, with a few exceptions.
+
+# Barcode inflection plots
+
+Imagine the barcode rank plot from the Cell Ranger web summary. That graphic plots the number of UMIs against the barcode rank, and typically has a sharp inflection point where the number of UMIs drops dramatically. These points can represent a transition between cell types from a higher RNA content population to a lower RNA content population, or from cell-associated barcodes to background.
+
+The Seurat `BarcodeInflectionsPlot` provides a similar graphic. In this case, because we are using the filtered barcode matrix, rather than all barcodes, much of the background is absent from the plot.
+
+```{r barcode_inflection_plot}
+experiment.aggregate <- CalculateBarcodeInflections(experiment.aggregate)
+BarcodeInflectionsPlot(experiment.aggregate)
+```
+
+Adding a log-scale transformation to the x-axis increases the resemblance to the Cell Ranger plot. Values on the y-axis are already log-transformed.
+
+```{r barcode_inflection_plot_log}
+BarcodeInflectionsPlot(experiment.aggregate) +
+  scale_x_continuous(trans = "log10")
+```
+
+# Prepare for the next section
+
+## Save object
+```{r saveRDS}
+saveRDS(experiment.aggregate, file="scRNA_workshop-01.rds")
+```
+
+## Download Rmd
+```{r download_Rmd}
+download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/02-filtering.Rmd", "02-filtering.Rmd")
+```
+
+## Session information
+```{r sessioinfo}
+sessionInfo()
+```
