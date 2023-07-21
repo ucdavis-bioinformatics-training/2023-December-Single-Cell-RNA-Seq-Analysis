@@ -43,14 +43,14 @@ navigation:
   - heading: scRNAseq Analysis
   - title: Prepare scRNAseq Analysis
     url: data_analysis/00-prepare_fixed
-  - title: Part 1- Create Object
+  - title: Part 1- Create object
     url: data_analysis/01-create_object_fixed
   - title: Part 2- Filtering
     url: data_analysis/02-filtering_fixed
   - title: Part 3- Normalization and scaling
     url: data_analysis/03-normalize_scale_fixed
-  # - title: Part 4- Dimensionality reduction
-  #   url: data_analysis/04-dimensionality_reduction
+  - title: Part 4- Dimensionality reduction
+    url: data_analysis/04-dimensionality_reduction_fixed
   # - title: Part 5- Doublet detection
   #   url: data_analysis/05-doublet_detection
   # - title: Part 6- Integration
