@@ -45,6 +45,8 @@ navigation:
     url: data_analysis/00-prepare_fixed
   - title: Part 1: Create Object
     url: data_analysis/01-create_object_fixed
+
+    
   # - title: Part 2: Filtering
   #   url: data_analysis/02-filtering
   # - title: Part 3: Normalization and scaling
