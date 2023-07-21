@@ -1,15 +1,13 @@
 ---
 title: "Prepare scRNA-Seq analysis"
 author: "UC Davis Bioinformatics Core"
-date: "`r Sys.Date()`"
+date: "2023-07-20"
 output: 
   html_document:
     keep_md: TRUE
     toc: TRUE
 ---
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(eval = FALSE)
-```
+
 
 ### Create a new RStudio project
 
@@ -28,7 +26,8 @@ The following package installation commands should be run individually, **in the
 
 #### BiocManager
 BiocManager is an interface for the bioinformatics-specific R package repository. We will be using BiocManager to install other packages when possible, rather than the base R function install.packages.
-```{r}
+
+```r
 if (!requireNamespace("BiocManager", quietly = TRUE)){
     install.packages("BiocManager")
 }
@@ -36,7 +35,8 @@ if (!requireNamespace("BiocManager", quietly = TRUE)){
 
 #### rmarkdown
 The rmarkdown package, when used with others like tinytex and knitr, allows you to knit your Rmd document to nicely-formatted reports.
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "rmarkdown")){
   BiocManager::install("rmarkdown")
 }
@@ -45,7 +45,8 @@ library(rmarkdown)
 
 #### tinytex
 TinyTeX is a small LaTeX distribution for use with R.
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "tinytex")){
   BiocManager::install("tinytex")
 }
@@ -53,7 +54,8 @@ library(tinytex)
 ```
 
 #### knitr
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "knitr")){
   BiocManager::install("knitr")
 }
@@ -62,7 +64,8 @@ library(knitr)
 
 #### kableExtra
 The kableExtra package gives the user fine-grained control over table formats. This is useful for knit reports.
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "kableExtra")){
   BiocManager::install("kableExtra")
 }
@@ -71,7 +74,8 @@ library(kableExtra)
 
 #### ggplot2
 An extremely popular package by the authors of RStudio, ggplot2 produces highly customizable plots.
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "ggplot2")){
   BiocManager::install("ggplot2")
 }
@@ -80,7 +84,8 @@ library(ggplot2)
 
 #### dplyr
 Like ggplot2 and tidyr, dplyr is part of the "tidyverse" by the RStudio authors: a group of packages designed for data analysis and visualization.
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "dplyr")){
   BiocManager::install("dplyr")
 }
@@ -88,7 +93,8 @@ library(dplyr)
 ```
 
 #### tidyr
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "tidyr")){
   BiocManager::install("tidyr")
 }
@@ -97,7 +103,8 @@ library(tidyr)
 
 #### viridis
 viridis produces accessible color palettes.
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "viridis")){
   BiocManager::install("viridis")
 }
@@ -105,7 +112,8 @@ library(viridis)
 ```
 
 #### hdf5r
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "hdf5r")){
   BiocManager::install("hdf5r")
 }
@@ -113,7 +121,8 @@ library(hdf5r)
 ```
 
 #### Seurat
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "Seurat")){
   BiocManager::install("Seurat")
 }
@@ -121,7 +130,8 @@ library(Seurat)
 ```
 
 #### biomaRt
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "biomaRt")){
   BiocManager::install("biomaRt")
 }
@@ -129,7 +139,8 @@ library(biomaRt)
 ```
 
 #### org.Hs.eg.db
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "org.Hs.eg.db")){
   BiocManager::install("org.Hs.eg.db")
 }
@@ -137,7 +148,8 @@ library(org.Hs.eg.db)
 ```
 
 #### limma
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "limma")){
   BiocManager::install("limma")
 }
@@ -145,7 +157,8 @@ library(limma)
 ```
 
 #### topGO
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "topGO")){
   BiocManager::install("topGO")
 }
@@ -153,7 +166,8 @@ library(topGO)
 ```
 
 #### remotes
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "remotes")){
   utils::install.packages("remotes")
 }
@@ -161,7 +175,8 @@ library(remotes)
 ```
 
 #### ape
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "ape")){
   utils::install.packages("ape")
 }
@@ -169,7 +184,8 @@ library(ape)
 ```
 
 #### DoubletFinder
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "DoubletFinder")){
   remotes::install_github('chris-mcginnis-ucsf/DoubletFinder')
 }
@@ -177,7 +193,8 @@ library(DoubletFinder)
 ```
 
 #### openxlsx
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "openxlsx")){
   BiocManager::install("openxlsx")
 }
@@ -185,7 +202,8 @@ library(openxlsx)
 ```
 
 #### HGNChelper
-```{r}
+
+```r
 if (!any(rownames(installed.packages()) == "HGNChelper")){
   BiocManager::install("HGNChelper")
 }
@@ -193,7 +211,8 @@ library(HGNChelper)
 ```
 
 Finally, we can get the session info to ensure that all of the packages were installed and loaded correctly.
-```{r}
+
+```r
 sessionInfo()
 ```
 
@@ -202,19 +221,20 @@ sessionInfo()
 In the R console run the following command to download part 1 of data analysis
 
 #### Markdown template document
-```{r}
-download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/01-create_object.Rmd", "01-create_object.Rmd")
+
+```r
+download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-June-Single-Cell-RNA-Seq-Analysis/main/data_analysis/scRNA_Workshop-PART1.Rmd", "scRNA_Workshop-PART1.Rmd")
 ```
 
 #### Expression matrix
 
 In Rstudio, navigate to the terminal tab (next to the console). This gives you access to a bash terminal. Run the following code:
 
-```{bash}
+
+```bash
 scp username@tadpole.genomecenter.ucdavis.edu:/share/workshop/scRNA_workshop/cellranger_outs/expression_data_cellranger.tar.gz ./
 tar -xzf expression_data_cellranger.tar.gz
-```
-
+<div class='r_output'>
 **Some Windows users may need to use Filezilla/WinSCP to download the file instead.**
 
 When the download and extraction are complete, you should see three folders: A001-C-007, A001-C-104 and B001-A-301. Make sure "scRNA_Workshop-PART1.Rmd" file is in the same location.

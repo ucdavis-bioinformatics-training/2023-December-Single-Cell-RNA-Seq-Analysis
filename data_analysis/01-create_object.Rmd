@@ -9,11 +9,13 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(message = FALSE, warning = FALSE)
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, error = FALSE)
 ```
 
-Our first Markdown document concentrates on getting data into R and setting up our initial object. We will start each section by loading the libraries necessary for that portion of the analysis.
+Our first Markdown document concentrates on getting data into R and setting up our initial object. We will also replicate some of the tables and figures found in the Cellranger web summary.
 
+# Load packages
+We will start each section by loading the libraries necessary for that portion of the analysis.
 ```{r libraries}
 library(Seurat)     # single cell RNA-Seq analysis
 library(kableExtra) # format tables
@@ -22,9 +24,8 @@ library(viridis)   # accessible color palettes
 ```
 
 # Experiment metadata
-
-The metadata we have available for this subset of the Becker experiment is very basic; we don't have a record of patient identifiers, biopsy dates, treatment course, or prognosis. Instead, for each sample, we know the group (healthy, polyp, or cancerous tissue) and the sequencing run (this can be derived from the read header). Let's create a data table containing this information.
-
+The metadata we have available for this subset of the [Becker experiment](https://www.nature.com/articles/s41588-022-01088-x) during this workshop is very basic; we don't have a record of patient identifiers, biopsy dates, treatment course, or prognosis. Instead, for each sample, we know the group (healthy, polyp, or cancerous tissue) and the sequencing run, which we can derive from the read header.
+Let's create a data table containing this information.
 ```{r}
 experiment.metadata <- data.frame(id = c("A001-C-007",
                                          "A001-C-104",
@@ -35,20 +36,19 @@ experiment.metadata <- data.frame(id = c("A001-C-007",
                                   run = c("A00509:126:HTLFWDMXX:1",
                                           "A00509:116:HTLNJDMXX:1",
                                           "A00509:113:HTNCWDMXX:1"))
-experiment.metadata
+experiment.metadata %>%
+  kable() %>%
+  kable_styling("striped")
 ```
 
 # Create metrics tables
-
-The **expression_data_cellranger.zip** file that we have downloaded in previous step contains the single cell matrix files and HDF5 files for three single nuclei RNASeq samples from [Becker et al., 2022](https://www.nature.com/articles/s41588-022-01088-x). After un-compressing the file, please make sure that you see three folders: A001-C-007, A001-C-104 and B001-A-301 in the same folder as this R markdown file.
-
-In this section, the metrics_summary.csv files produced by Cellranger are used to create a single table summarizing the sequencing metrics for each sample.
-
+The **expression_data_cellranger.zip** file that we have downloaded in previous step contains the single cell matrix files and HDF5 files for three single nuclei RNASeq samples from [Becker et al., 2022](https://www.nature.com/articles/s41588-022-01088-x). After un-compressing the file, please make sure that you see three folders (A001-C-007, A001-C-104, and B001-A-301) in the same folder as this R markdown file. If the three folders are located elsewhere, please change the assignment of "dataset.loc" in the code box below to reflect the location of your data.
 ```{r experiment_setup}
 experiment.name <- "Becker 2022 colorectal cancer continuum"
 dataset.loc <- "./"
 ```
 
+In this section, the metrics_summary.csv files produced by Cellranger are used to create a single table summarizing the sequencing metrics for each sample.
 ```{r read_metrics}
 sample.metrics <- lapply(experiment.metadata$id, function(id){
   metrics = read.csv(file.path(dataset.loc,
@@ -57,7 +57,7 @@ sample.metrics <- lapply(experiment.metadata$id, function(id){
                      colClasses = "character")
 })
 experiment.metrics <- do.call("rbind", sample.metrics)
-rownames(experiment.metrics) <- sample.ids
+rownames(experiment.metrics) <- experiment.metadata$id
 
 sequencing.metrics <- data.frame(t(experiment.metrics[,c(1:19)]))
 
@@ -69,31 +69,37 @@ sequencing.metrics %>%
   pack_rows("Sequencing Characteristics", 4, 9, label_row_css = "background-color: #666; color: #fff;") %>%
   pack_rows("Mapping Characteristics", 10, 19, label_row_css = "background-color: #666; color: #fff;") %>%
   kable_styling("striped")
-rm(sample.metrics, experiment.metrics, sequencing.metrics)
 ```
 
+This roughly replicates the table that appears in the Cellranger web summary file.
+
 # Create Seurat object
+We will be using [Seurat](http://satijalab.org/seurat/) (currently version 4) as the basis of our single cell (or nucleus) RNA-Seq analysis. Seurat is a popular R package that is designed for QC, analysis, and exploration of single cell data, which aims to enable users to identify and interpret sources of heterogeneity from single cell transcriptomic measurements, and to integrate diverse types of single cell data.
+In addition to the standard Seurat workflow, this documentation makes use of some custom code, and brings in functions from other packages. For additional information on Seurat standard workflows, see the authors' [tutorials](https://satijalab.org/seurat/vignettes.html).
 
-[Seurat](http://satijalab.org/seurat/) (now Version 4) is a popular R package that is designed for QC, analysis, and exploration of single cell data. Seurat aims to enable users to identify and interpret sources of heterogeneity from single cell transcriptomic measurements, and to integrate diverse types of single cell data. Further, the authors provide several [tutorials](https://satijalab.org/seurat/vignettes.html), on their website.
-
-First we read in data from each individual sample folder.
-
+#### Read in expression matrix
+First, we read in data from each individual sample folder.
 ```{r load_data_hdf5}
-expression.data <- lapply(sample.ids, function(id){
+expression.data <- lapply(experiment.metadata$id, function(id){
   sample.matrix = Read10X_h5(file.path(dataset.loc, id, "/outs","filtered_feature_bc_matrix.h5"))
   colnames(sample.matrix) = paste(sapply(strsplit(colnames(sample.matrix),split="-"), '[[', 1L), id, sep="_")
   sample.matrix
 })
-names(expression.data) <- sample.ids
-
-str(expression.data)
+names(expression.data) <- experiment.metadata$id
 ```
 
-The `CreateSeuratObject` function allows feature (gene) and cell filtering by minimum cell and feature counts. We will set these to 0 for now in order to explore manual filtering more fully in part 2.
+```{r view_1, eval=FALSE}
+View(expression.data)
+```
 
-```{r create_seurat_object}
+#### Merge matrices
+```{r aggregate}
 aggregate.data <- do.call("cbind", expression.data)
+```
 
+#### Create object
+The `CreateSeuratObject` function allows feature (gene) and cell filtering by minimum cell and feature counts. We will set these to 0 for now in order to explore manual filtering more fully in part 2.
+```{r create_seurat_object}
 experiment.aggregate <- CreateSeuratObject(
   aggregate.data,
   project = experiment.name,
@@ -101,13 +107,38 @@ experiment.aggregate <- CreateSeuratObject(
   min.features = 0,
   names.field = 2, # tells Seurat which part of the cell identifier contains the sample name
   names.delim = "\\_")
-
-experiment.aggregate
-str(experiment.aggregate)
-rm(expression.data, aggregate.data)
 ```
 
+# Add metadata
+We can now attach the metadata in our table to the Seurat object.
+
+#### Match metadata to expression matrix
+The columns of the expression matrix correspond to the cells in the experiment. When we created the Seurat object, the "names.field" and "names.delim" arguments allowed Seurat to infer sample identity from the cell names. This information is stored in a variable called "orig.ident."
+```{r orig.ident}
+levels(experiment.aggregate$orig.ident)
+```
+
+These sample identifiers are stored in the experiment.metadata object as well, which allows us to match the other metadata contained within that table to the correct cells within the Seurat object.
+```{r sample.index}
+sample.index <- match(experiment.aggregate$orig.ident, experiment.metadata$id)
+```
+
+#### Attach metadata
+The AddMetaData function returns a new Seurat object with an additional column in the metadata table containing the new information.
+```{r AddMetaData}
+experiment.aggregate <- AddMetaData(experiment.aggregate,
+                                    metadata = experiment.metadata$group[sample.index],
+            col.name = "group")
+experiment.aggregate <- AddMetaData(experiment.aggregate,
+                                    metadata = experiment.metadata$run[sample.index],
+                                    col.name = "run")
+```
+
+# Explore the Seurat object
 A Seurat object is a complex data structure containing the data from a single cell or single nucleus assay and **all** of the information associated with the experiment, including annotations, analysis, and more. This data structure was developed by the authors of the Seurat analysis package, for use with their pipeline.
+```{r view_2, eval=FALSE}
+View(experiment.aggregate)
+```
 
 Most Seurat functions take the object as an argument, and return either a new Seurat object or a ggplot object (a visualization). As the analysis continues, more and more data will be added to the object.
 
@@ -137,29 +168,31 @@ The Seurat `BarcodeInflectionsPlot` provides a similar graphic. In this case, be
 
 ```{r barcode_inflection_plot}
 experiment.aggregate <- CalculateBarcodeInflections(experiment.aggregate)
-BarcodeInflectionsPlot(experiment.aggregate)
+BarcodeInflectionsPlot(experiment.aggregate) +
+  scale_color_viridis_d(option = "mako")
 ```
 
 Adding a log-scale transformation to the x-axis increases the resemblance to the Cell Ranger plot. Values on the y-axis are already log-transformed.
 
 ```{r barcode_inflection_plot_log}
 BarcodeInflectionsPlot(experiment.aggregate) +
-  scale_x_continuous(trans = "log10")
+  scale_x_continuous(trans = "log10") +
+  scale_color_viridis_d(option = "mako")
 ```
 
 # Prepare for the next section
 
-## Save object
+#### Save object
 ```{r saveRDS}
 saveRDS(experiment.aggregate, file="scRNA_workshop-01.rds")
 ```
 
-## Download Rmd
-```{r download_Rmd}
+#### Download Rmd
+```{r download_Rmd, eval=FALSE}
 download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/02-filtering.Rmd", "02-filtering.Rmd")
 ```
 
-## Session information
+#### Session information
 ```{r sessioinfo}
 sessionInfo()
 ```
