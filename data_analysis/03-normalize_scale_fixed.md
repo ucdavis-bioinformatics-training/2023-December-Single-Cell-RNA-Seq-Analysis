@@ -19,8 +19,8 @@ experiment.aggregate <- readRDS("scRNA_workshop-02.rds")
 experiment.aggregate
 ```
 
-<div class='r_output'> An object of class Seurat 
- 11292 features across 6312 samples within 1 assay 
+<div class='r_output'> An object of class Seurat
+ 11292 features across 6312 samples within 1 assay
  Active assay: RNA (11292 features, 0 variable features)
 </div>
 ```r
@@ -125,8 +125,8 @@ Because the "set.ident" argument was set to TRUE (this is also the default behav
 table(Idents(experiment.aggregate))
 ```
 
-<div class='r_output'> 
-    S  G2M   G1 
+<div class='r_output'>
+    S  G2M   G1
  1417 1136 3759
 </div>
 ```r
@@ -134,8 +134,8 @@ Idents(experiment.aggregate) <- "orig.ident"
 table(Idents(experiment.aggregate))
 ```
 
-<div class='r_output'> 
- A001-C-007 A001-C-104 B001-A-301 
+<div class='r_output'>
+ A001-C-007 A001-C-104 B001-A-301
        1023       1858       3431
 </div>
 ## Identify variable genes
@@ -209,7 +209,7 @@ saveRDS(experiment.aggregate, file = "scRNA_workshop-03.rds")
 #### Download Rmd
 
 ```r
-download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/04-dimensionality_reduction.Rmd", "03-dimensionality_reduction.Rmd")
+download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/04-dimensionality_reduction.Rmd", "04-dimensionality_reduction.Rmd")
 ```
 
 #### Session Information
@@ -221,23 +221,23 @@ sessionInfo()
 <div class='r_output'> R version 4.3.1 (2023-06-16)
  Platform: aarch64-apple-darwin20 (64-bit)
  Running under: macOS Monterey 12.4
- 
+
  Matrix products: default
- BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib 
+ BLAS:   /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRblas.0.dylib
  LAPACK: /Library/Frameworks/R.framework/Versions/4.3-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
- 
+
  locale:
  [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
- 
+
  time zone: America/Los_Angeles
  tzcode source: internal
- 
+
  attached base packages:
  [1] stats     graphics  grDevices utils     datasets  methods   base     
- 
+
  other attached packages:
  [1] kableExtra_1.3.4   SeuratObject_4.1.3 Seurat_4.3.0.1    
- 
+
  loaded via a namespace (and not attached):
    [1] deldir_1.0-9           pbapply_1.7-2          gridExtra_2.3         
    [4] rlang_1.1.1            magrittr_2.0.3         RcppAnnoy_0.0.21      
@@ -258,7 +258,7 @@ sessionInfo()
   [49] future.apply_1.11.0    zoo_1.8-12             sctransform_0.3.5     
   [52] httpuv_1.6.11          Matrix_1.6-0           splines_4.3.1         
   [55] igraph_1.5.0           tidyselect_1.2.0       abind_1.4-5           
-  [58] rstudioapi_0.15.0      yaml_2.3.7             spatstat.random_3.1-5 
+  [58] rstudioapi_0.15.0      yaml_2.3.7             spatstat.random_3.1-5
   [61] codetools_0.2-19       miniUI_0.1.1.1         spatstat.explore_3.2-1
   [64] listenv_0.9.0          lattice_0.21-8         tibble_3.2.1          
   [67] plyr_1.8.8             withr_2.5.0            shiny_1.7.4.1         
@@ -272,7 +272,7 @@ sessionInfo()
   [91] data.table_1.14.8      webshot_0.5.5          RANN_2.6.1            
   [94] leiden_0.4.3           cowplot_1.1.1          grid_4.3.1            
   [97] tidyr_1.3.0            colorspace_2.1-0       nlme_3.1-162          
- [100] patchwork_1.1.2        cli_3.6.1              spatstat.sparse_3.0-2 
+ [100] patchwork_1.1.2        cli_3.6.1              spatstat.sparse_3.0-2
  [103] fansi_1.0.4            viridisLite_0.4.2      svglite_2.1.1         
  [106] dplyr_1.1.2            uwot_0.1.16            gtable_0.3.3          
  [109] sass_0.4.7             digest_0.6.33          progressr_0.13.0      
