@@ -1,18 +1,19 @@
 ---
-title: "Introduction to Single Cell RNAseq Part 1: Create Seurat Object"
+title: "Introduction to Single Cell RNA-Seq Part 1: Create Seurat object"
 author: "UCD Bioinformatics Core"
-date: "2023-07-20"
+date: "2023-07-21"
 output:
     html_document:
       keep_md: TRUE
       toc: TRUE
 ---
 
+# Introduction to Single Cell RNA-Seq Part 1: Create Seurat object
 
 
 Our first Markdown document concentrates on getting data into R and setting up our initial object. We will also replicate some of the tables and figures found in the Cellranger web summary.
 
-# Load packages
+## Load packages
 We will start each section by loading the libraries necessary for that portion of the analysis.
 
 ```r
@@ -22,7 +23,7 @@ library(ggplot2)   # create graphics
 library(viridis)   # accessible color palettes
 ```
 
-# Experiment metadata
+## Experiment metadata
 The metadata we have available for this subset of the [Becker experiment](https://www.nature.com/articles/s41588-022-01088-x) during this workshop is very basic; we don't have a record of patient identifiers, biopsy dates, treatment course, or prognosis. Instead, for each sample, we know the group (healthy, polyp, or cancerous tissue) and the sequencing run, which we can derive from the read header.
 Let's create a data table containing this information.
 
@@ -68,7 +69,7 @@ experiment.metadata %>%
 </tbody>
 </table>
 
-# Create metrics tables
+## Create metrics tables
 The **expression_data_cellranger.zip** file that we have downloaded in previous step contains the single cell matrix files and HDF5 files for three single nuclei RNASeq samples from [Becker et al., 2022](https://www.nature.com/articles/s41588-022-01088-x). After un-compressing the file, please make sure that you see three folders (A001-C-007, A001-C-104, and B001-A-301) in the same folder as this R markdown file. If the three folders are located elsewhere, please change the assignment of "dataset.loc" in the code box below to reflect the location of your data.
 
 ```r
@@ -233,7 +234,7 @@ sequencing.metrics %>%
 
 This roughly replicates the table that appears in the Cellranger web summary file.
 
-# Create Seurat object
+## Create Seurat object
 We will be using [Seurat](http://satijalab.org/seurat/) (currently version 4) as the basis of our single cell (or nucleus) RNA-Seq analysis. Seurat is a popular R package that is designed for QC, analysis, and exploration of single cell data, which aims to enable users to identify and interpret sources of heterogeneity from single cell transcriptomic measurements, and to integrate diverse types of single cell data.
 In addition to the standard Seurat workflow, this documentation makes use of some custom code, and brings in functions from other packages. For additional information on Seurat standard workflows, see the authors' [tutorials](https://satijalab.org/seurat/vignettes.html).
 
@@ -273,7 +274,7 @@ experiment.aggregate <- CreateSeuratObject(
   names.delim = "\\_")
 ```
 
-# Add metadata
+## Add metadata
 We can now attach the metadata in our table to the Seurat object.
 
 #### Match metadata to expression matrix
@@ -303,7 +304,7 @@ experiment.aggregate <- AddMetaData(experiment.aggregate,
                                     col.name = "run")
 ```
 
-# Explore the Seurat object
+## Explore the Seurat object
 A Seurat object is a complex data structure containing the data from a single cell or single nucleus assay and **all** of the information associated with the experiment, including annotations, analysis, and more. This data structure was developed by the authors of the Seurat analysis package, for use with their pipeline.
 
 ```r
@@ -360,7 +361,7 @@ head(experiment.aggregate[[]])
 </div>
 The use of syntax is often a matter of personal preference. In the interest of clarity, this documentation will generally use the more explicit syntax, with a few exceptions.
 
-# Barcode inflection plots
+## Barcode inflection plots
 
 Imagine the barcode rank plot from the Cell Ranger web summary. That graphic plots the number of UMIs against the barcode rank, and typically has a sharp inflection point where the number of UMIs drops dramatically. These points can represent a transition between cell types from a higher RNA content population to a lower RNA content population, or from cell-associated barcodes to background.
 
@@ -386,7 +387,7 @@ BarcodeInflectionsPlot(experiment.aggregate) +
 
 ![](01-create_object_files/figure-html/barcode_inflection_plot_log-1.png)<!-- -->
 
-# Prepare for the next section
+## Prepare for the next section
 
 #### Save object
 
