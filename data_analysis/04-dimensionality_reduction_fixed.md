@@ -1,7 +1,7 @@
 ---
 title: "Introduction to Single Cell RNA-Seq Part 4: Dimensionality reduction"
 author: "UCD Bioinformatics Core"
-date: "2023-07-21"
+date: "2023-07-28"
 output:
     html_document:
       keep_md: TRUE
@@ -61,7 +61,7 @@ DimPlot(experiment.aggregate,
 The axes are unit-less; points (cells or nuclei) that are farther apart are more dissimilar on the displayed PC than points that are closer together.
 
 ### PCA loadings
-Each PC can be imagined as a sort of meta-gene for which every cell has an expression value. The top genes associated with the reduction component (i.e. contributing to a cell's "expression level" of that meta-gene) can plotted for a selected dimension(s) using the `VizDimLoadings` function.
+Each PC can be imagined as a sort of meta-gene for which every cell has an expression value. The top genes associated with the reduction component (i.e. contributing to a cell's "expression level" of that meta-gene) can be plotted for a selected dimension(s) using the `VizDimLoadings` function.
 
 ```r
 VizDimLoadings(experiment.aggregate,
@@ -171,7 +171,7 @@ saveRDS(experiment.aggregate, file="scRNA_workshop-04.rds")
 #### Download Rmd
 
 ```r
-download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/05-doublet_detection.Rmd", "05-doublet_detection.Rmd")
+download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/05-integration.Rmd", "05-integration.Rmd")
 ```
 
 #### Session information

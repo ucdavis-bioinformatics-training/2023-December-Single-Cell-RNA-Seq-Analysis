@@ -1,0 +1,172 @@
+---
+title: "Introduction to Single Cell RNA-Seq Part 7: Doublet detection"
+author: "UCD Bioinformatics Core"
+date: "`r Sys.Date()`"
+output:
+    html_document:
+      keep_md: TRUE
+      toc: TRUE
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(warning=FALSE, error=FALSE, message=FALSE)
+```
+
+# Introduction to Single Cell RNA-Seq Part 7: Doublet detection
+Doublets are cells that appear to be, but are not, real cells. There are two major types of doublets: heterotypic and homotypic. *Heterotypic doublets* are formed by cells with distinct transcriptional profiles. *Homotypic doublets* are formed by cells with similar transcriptional profiles. Heterotypic doublets are relatively easier to detect compared with homotypic doublets.
+
+Depending on the protocols used to barcode single cells/nuclei, doublet rates vary significantly and it can reach as high as 40%. Experimental strategies have been developed to reduce the doublet rate, such as [cell hashing](https://genomebiology.biomedcentral.com/articles/10.1186/s13059-018-1603-1), and [MULTI-Seq](https://www.nature.com/articles/s41592-019-0433-8). However, these techniques require extra steps in sample preparation which leads to extra costs and time, and they do not guarantee to remove all doublets.
+
+Naturally, removing doublets _in silico_ is very appealing and there have been many tools/methods developed to achieve this: [DoubletFinder](https://www.cell.com/cell-systems/pdfExtended/S2405-4712(19)30073-0), DoubletDetection(https://github.com/JonathanShor/DoubletDetection), [DoubletDecon](https://www.sciencedirect.com/science/article/pii/S2211124719312860), [demuxlet](https://www.nature.com/articles/nbt.4042), among others.
+
+<p align = "center">
+<img src="figures/doublets.jpg" alt="micribial" width="85%"/>
+</p>
+
+<p align = "right" style="font-family:Times;font-size:12px;">
+Xi, etc., Cell Systems, 2021, https://www.sciencedirect.com/science/article/pii/S2405471220304592
+</p>
+
+## Set up workspace
+
+```{r workspace}
+library(Seurat)
+library(DoubletFinder)
+library(ggplot2)
+set.seed(12345)
+```
+
+## Prepare data for DoubletFinder
+[DoubletFinder](https://github.com/chris-mcginnis-ucsf/DoubletFinder) takes fully pre-processed data from Seurat (NormalizeData, FindVariableGenes, ScaleData, RunPCA, and RunUMAP) as input and the process should be done for each sample individually. The input data should be processed to remove low-quality cell clusters first.
+```{r prepare}
+experiment.aggregate <- readRDS("scRNA_workshop-02.rds") # filtered object
+experiment.split <- SplitObject(experiment.aggregate, split.by = "orig.ident")
+rm(experiment.aggregate)
+experiment.split <- lapply(experiment.split, function(sce){
+  sce = NormalizeData(sce, normalization.method = "LogNormalize", scale.factor = 10000)
+  sce = CellCycleScoring(sce, s.features = cc.genes$s.genes, g2m.features = cc.genes$g2m.genes, set.ident = FALSE)
+  sce = FindVariableFeatures(sce)
+  sce = ScaleData(sce, vars.to.regress = c("S.Score", "G2M.Score", "percent_MT", "nFeature_RNA"))
+  RunPCA(sce, npcs = 100)
+})
+```
+
+## Parameter selection
+In addition to the Seurat object, DoubletFinder takes a number of arguments. These are
+
+* PCs: a vector of statistically significant PCs to use
+* pN: the number of artificially generated doublets (default = 0.25)
+* pK: PC neighborhood size used to compute network
+* nExp: threshold used to make doublet/singlet call
+
+We will use PCs 1-50 (based on the dimensionality reduction section) and the default value of 0.25 for pN.
+
+### pK
+The optimal value of pK varies between samples, and is impacted by the number of cell states and magnitude of transcriptional heterogeneity present in the data. The mean-variance normalized bimodality coefficient (BCmvn) is used as a measure of pK optimization. In experiments with known doublet frequencies, BCmvn is maximized by values of pK that produce the most accurate doublet-calling. In the code below, the pK value corresponding to the maxiumum BCmvn is selected for each sample.
+```{r pK_select, results=FALSE}
+pK <- lapply(experiment.split, function(sce){
+  sweep.res = paramSweep_v3(sce, PCs = 1:50, sct = FALSE)
+  sweep.stats = summarizeSweep(sweep.res, GT = FALSE)
+  BCmvn = find.pK(sweep.stats)
+  as.numeric(BCmvn$pK[which(BCmvn$BCmetric == max(BCmvn$BCmetric))])
+})
+```
+```{r show_pK}
+pK
+```
+
+### nExp
+In single cell data generated using microfluidics, the frequency of all multiplets (both homotypic and heterotypic) can be modeled with a Poisson distribution. The probability of capturing multiple cells in a droplet is a function of the loading density of the microfluidic device. However, because homotypic doublets are far more difficult to detect informatically, the Poisson distribution overestimates the number of *detectable* doublets.
+
+Here we will use the 10x expected doublet rate of 8% for chips that were loaded with 16,500 cells (targeting 10,000 cells for recovery).
+```{r nExp_select}
+nExp <- lapply(experiment.split, function(sce){
+  round(0.08*dim(sce)[2])
+})
+nExp
+```
+#### Homotypic doublet adjustment
+If cell type annotations are available, the following code can be used to adjust the estimated detectable doublet frequency downwards by adjusting for the expected frequency of homotypic doublets.
+
+Let's read in the cell type assignments from the previous part and attach them to the split object.
+```{r add_ScType}
+experiment.aggregate <- readRDS("scRNA_workshop-06.rds")
+sctype.split <- lapply(SplitObject(experiment.aggregate, split.by = "orig.ident"),
+                       function(sce){
+  sce$subcluster_ScType
+})
+experiment.split <- lapply(seq_along(experiment.split), function(i){
+  AddMetaData(experiment.split[[i]],
+              metadata = sctype.split[[i]],
+              col.name = "subcluster_ScType_filtered")
+})
+homotypic.prop <- lapply(experiment.split, function(sce){
+  modelHomotypic(annotations = sce@meta.data$subcluster_ScType_filtered)
+})
+nExp.adj <- lapply(seq_along(nExp), function(i){
+  round(nExp[[i]] * (1 - homotypic.prop[[i]]))
+})
+nExp.adj
+```
+
+## Doublet detection
+```{r doubletFinder_v3, results=FALSE}
+experiment.split <- lapply(seq_along(experiment.split), function(i){
+  doubletFinder_v3(experiment.split[[i]],
+                   PCs = 1:50,
+                   pN = 0.25,
+                   pK = as.numeric(as.character(pK[[i]])),
+                   nExp = nExp.adj[[i]],
+                   reuse.pANN = FALSE,
+                   sct = FALSE)
+})
+```
+
+## Aggreate doublet calls
+The doublet calls are currently split over three objects. Let's aggregate them into a named character vector.
+```{r aggregate_calls}
+calls.list <- lapply(experiment.split, function(sce){
+  calls = sce@meta.data[,grep("DF.classifications", colnames(sce@meta.data))]
+  names(calls) = rownames(sce@meta.data)
+  calls
+})
+doublet.calls <- unlist(calls.list)
+head(doublet.calls)
+```
+
+## Add doublet calls to aggregated object
+Now that the doublet calls are in a single named vector, they can be added as metadata to the aggregate Seurat object.
+```{r add_calls}
+experiment.aggregate <- AddMetaData(experiment.aggregate,
+                                    metadata = doublet.calls,
+                                    col.name = "doublet_call")
+DimPlot(experiment.aggregate,
+        reduction = "umap",
+        group.by = "doublet_call",
+        pt.size = 0.1,
+        shuffle = TRUE) +
+  scale_color_manual(values = c("red", "gray")) +
+  theme(plot.title = element_blank())
+```
+
+## Remove doublets
+```{r remove_doublets}
+experiment.aggregate <- subset(experiment.aggregate, doublet_call == "Singlet")
+experiment.aggregate$doublet_call <- NULL # remove redundant column from metadata
+```
+
+## Prepare for the next section
+
+#### Save object
+```{r saveRDS}
+saveRDS(experiment.aggregate, file = "scRNA_workshop-07.rds")
+```
+
+#### Download Rmd document
+```{r download_Rmd, eval=FALSE}
+download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/08-de_enrichment.Rmd", "08-de_enrichment.Rmd")
+```
+
+#### Session information
+```{r sessioinfo}
+sessionInfo()
+```

@@ -105,6 +105,7 @@ library(viridis)
 ```
 
 #### hdf5r
+HDF5 (heirarchical data format version five) files can be used to store single cell expression data (including output from Cell Ranger). The hdf5r package provides utilities for interacting with the format.
 ```{r}
 if (!any(rownames(installed.packages()) == "hdf5r")){
   BiocManager::install("hdf5r")
@@ -113,6 +114,7 @@ library(hdf5r)
 ```
 
 #### Seurat
+Seurat is an extensive package for the analysis of single cell experiments, from normalization to visualization.
 ```{r}
 if (!any(rownames(installed.packages()) == "Seurat")){
   BiocManager::install("Seurat")

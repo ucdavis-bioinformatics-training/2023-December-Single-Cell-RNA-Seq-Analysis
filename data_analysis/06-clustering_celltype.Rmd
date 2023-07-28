@@ -1,0 +1,580 @@
+---
+title: "Introduction to Single Cell RNA-Seq Part 6: Clustering and cell type assignment"
+author: "UCD Bioinformatics Core"
+date: "`r Sys.Date()`"
+output:
+    html_document:
+      keep_md: TRUE
+      toc: TRUE
+---
+
+# Introduction to Single Cell RNA-Seq Part 6: Clustering and cell type assignment
+Clustering and cell type assignment are critical steps in many single cell (or single nucleus) experiments. The power of single cell experiments is to capture the heterogeneity within samples as well as between them. Clustering permits the user to organize cells into clusters that correspond to biologically and experimentally relevant populations.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, error = FALSE)
+```
+
+## Set up workspace
+```{r libraries}
+library(Seurat)
+library(kableExtra)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(HGNChelper)
+set.seed(12345)
+experiment.aggregate <- readRDS("scRNA_workshop-04.rds")
+experiment.aggregate
+```
+
+## Construct network
+Seurat implements an graph-based clustering approach. Distances between the cells are calculated based on previously identified PCs.
+
+The default method for identifying k-nearest neighbors is [annoy](https://github.com/spotify/annoy), an approximate nearest-neighbor approach that is widely used for high-dimensional analysis in many fields, including single-cell analysis. Extensive community benchmarking has shown that annoy substantially improves the speed and memory requirements of neighbor discovery, with negligible impact to downstream results.
+```{r FindNeighbors}
+experiment.aggregate <- FindNeighbors(experiment.aggregate, reduction = "pca", dims = 1:50)
+```
+
+## Find clusters
+The FindClusters function implements the neighbor based clustering procedure, and contains a resolution parameter that sets the granularity of the downstream clustering, with increased values leading to a greater number of clusters. This code produces a series of resolutions for us to investigate and choose from.
+
+The clustering resolution parameter is unit-less and somewhat arbitrary. The resolutions used here were selected to produce a useable number of clusters in the example experiment. 
+```{r FindClusters}
+experiment.aggregate <- FindClusters(experiment.aggregate,
+                                     resolution = seq(0.1, 0.4, 0.1))
+```
+
+Seurat adds the clustering information to the metadata table. Each FindClusters call generates a new column named with the assay, followed by "_snn_res.", and the resolution.
+```{r cluster_metadata}
+cluster.resolutions <- grep("res", colnames(experiment.aggregate@meta.data), value = TRUE)
+head(experiment.aggregate@meta.data[,cluster.resolutions]) %>%
+  kable(caption = 'Cluster identities are added to the meta.data slot.') %>%
+  kable_styling("striped")
+```
+
+## Explore clustering resolutions
+The number of clusters produced increases with the clustering resolution.
+```{r clusters_per_res}
+sapply(cluster.resolutions, function(res){
+  length(levels(experiment.aggregate@meta.data[,res]))
+})
+```
+
+### Visualize clustering
+
+Dimensionality reduction plots can be used to visualize the clustering results. On these plots, we can see how each clustering resolution aligns with patterns in the data revealed by dimensionality reductions.
+
+#### UMAP
+
+```{r UMAP}
+# UMAP colored by cluster
+lapply(cluster.resolutions, function(res){
+  DimPlot(experiment.aggregate,
+          group.by = res,
+          reduction = "umap",
+          shuffle = TRUE) +
+    scale_color_viridis_d(option = "turbo")
+})
+```
+
+### Investigate the relationship between cluster identity and sample identity
+
+```{r membership}
+lapply(cluster.resolutions, function(res){
+         tmp = experiment.aggregate@meta.data[,c(res, "group")]
+         colnames(tmp) = c("cluster", "group")
+         ggplot(tmp, aes(x = cluster, fill = group)) +
+           geom_bar() +
+           scale_fill_viridis_d(option = "mako") +
+           theme_classic()
+})
+```
+
+### Investigate the relationship between cluster identity and metadata values
+Here, example plots are displayed for the lowest resolution in order to save space. To see plots for each resolution, use `lapply()`.
+```{r}
+VlnPlot(experiment.aggregate,
+        group.by = "RNA_snn_res.0.4",
+        features = "nCount_RNA",
+        pt.size = 0.1) +
+  scale_fill_viridis_d(option = "turbo")
+VlnPlot(experiment.aggregate,
+        group.by = "RNA_snn_res.0.4",
+        features = "nFeature_RNA",
+        pt.size = 0.1) +
+  scale_fill_viridis_d(option = "turbo")
+VlnPlot(experiment.aggregate,
+        group.by = "RNA_snn_res.0.4",
+        features = "percent_MT",
+        pt.size = 0.1) +
+  scale_fill_viridis_d(option = "turbo")
+```
+ 
+### Visualize expression of genes of interest
+
+```{r feature}
+FeaturePlot(experiment.aggregate,
+            reduction = "umap",
+            features = "KCNMA1")
+VlnPlot(experiment.aggregate,
+        group.by = "RNA_snn_res.0.4",
+        features = "KCNMA1",
+        pt.size = 0.1) +
+  scale_fill_viridis_d(option = "turbo")
+```
+
+## Select a resolution
+For now, let's use resolution 0.4. Over the remainder of this section, we will refine the clustering further.
+```{r select}
+Idents(experiment.aggregate) <- "RNA_snn_res.0.4"
+```
+
+## Visualize cluster tree
+Building a phylogenetic tree relating the 'average' cell from each group in default 'Ident' (currently "RNA_snn_res.0.1"). This tree is estimated based on a distance matrix constructed in either gene expression space or PCA space.
+```{r tree}
+experiment.aggregate <- BuildClusterTree(experiment.aggregate, dims = 1:50)
+PlotClusterTree(experiment.aggregate)
+```
+
+
+## Merge clusters
+In many experiments, the clustering resolution does not need to be uniform across all of the cell types present. While for some cell types of interest fine detail may be desirable, for others, simply grouping them into a larger parent cluster is sufficient. Merging cluster is very straightforward.
+```{r merge}
+experiment.aggregate <- RenameIdents(experiment.aggregate,
+                                     '11' = '10',
+                                     '12' = '8')
+experiment.aggregate$res.0.4_merged <- Idents(experiment.aggregate)
+table(experiment.aggregate$res.0.4_merged)
+experiment.aggregate@meta.data %>%
+  ggplot(aes(x = res.0.4_merged, fill = group)) +
+  geom_bar() +
+  scale_fill_viridis_d(option = "mako") +
+  theme_classic()
+DimPlot(experiment.aggregate,
+        reduction = "umap",
+        group.by = "res.0.4_merged",
+        label = TRUE) +
+  scale_color_viridis_d(option = "turbo")
+VlnPlot(experiment.aggregate,
+        group.by = "res.0.4_merged",
+        features = "KCNMA1") +
+  scale_fill_viridis_d(option = "turbo")
+```
+
+## Reorder the clusters
+Merging the clusters changed the order in which they appear on a plot. In order to reorder the clusters for plotting purposes take a look at the levels of the identity, then re-level as desired.
+```{r relevel}
+levels(experiment.aggregate$res.0.4_merged)
+# move one cluster to the first position
+experiment.aggregate$res.0.4_merged <- relevel(experiment.aggregate$res.0.4_merged, "0")
+levels(experiment.aggregate$res.0.4_merged)
+# the color assigned to some clusters will change
+VlnPlot(experiment.aggregate,
+        group.by = "res.0.4_merged",
+        features = "CAPN9",
+        pt.size = 0.1) +
+  scale_fill_viridis_d(option = "turbo")
+# re-level entire factor
+new.order <- as.character(sort(as.numeric(levels(experiment.aggregate$res.0.4_merged))))
+experiment.aggregate$res.0.4_merged <- factor(experiment.aggregate$res.0.4_merged, levels = new.order)
+levels(experiment.aggregate$res.0.4_merged)
+VlnPlot(experiment.aggregate,
+        group.by = "res.0.4_merged",
+        features = "MYRIP",
+        pt.size = 0.1) +
+  scale_fill_viridis_d(option = "turbo")
+```
+
+## Subcluster
+While merging clusters reduces the resolution in some parts of the experiment, sub-clustering has the opposite effect. Let's produce sub-clusters for cluster 5.
+```{r subcluster}
+experiment.aggregate <- FindSubCluster(experiment.aggregate,
+                                       graph.name = "RNA_snn",
+                                       cluster = 5,
+                                       subcluster.name = "subcluster")
+DimPlot(experiment.aggregate,
+        reduction = "umap",
+        group.by = "subcluster",
+        shuffle = TRUE) +
+  scale_color_viridis_d(option = "turbo")
+```
+
+## Subset experiment by cluster identity
+After exploring and refining the cluster resolution, we may have identified some clusters that are composed of cells we aren't interested in. For example, if we have identified a cluster likely composed of contaminants, this cluster can be removed from the analysis. Alternatively, if a group of clusters have been identified as particularly of interest, these can be isolated and re-analyzed.
+```{r subset}
+# remove cluster 13
+Idents(experiment.aggregate) <- experiment.aggregate$subcluster
+experiment.tmp <- subset(experiment.aggregate, subcluster != "13")
+DimPlot(experiment.tmp,
+        reduction = "umap",
+        group.by = "subcluster",
+        shuffle = TRUE) +
+  scale_color_viridis_d(option = "turbo")
+# retain cells belonging only to specified clusters
+experiment.tmp <- subset(experiment.aggregate, subcluster %in% c("1", "2", "5_0", "5_1", "5_2", "5_3", "7"))
+DimPlot(experiment.tmp,
+        reduction = "umap",
+        group.by = "subcluster",
+        shuffle = TRUE) +
+  scale_color_viridis_d(option = "turbo")
+```
+
+## Identify marker genes
+
+Seurat provides several functions that can help you find markers that define clusters via differential expression:
+
+* `FindMarkers` identifies markers for a cluster relative to all other clusters
+
+* `FindAllMarkers` performs the find markers operation for all clusters
+
+* `FindAllMarkersNode` defines all markers that split a node from the cluster tree
+
+### FindMarkers
+
+```{r FindMarkers}
+markers <- FindMarkers(experiment.aggregate,
+                       group.by = "subcluster",
+                       ident.1 = "1")
+length(which(markers$p_val_adj < 0.05)) # how many are significant?
+head(markers) %>%
+  kable() %>%
+  kable_styling("striped")
+```
+
+The "pct.1" and "pct.2" columns record the proportion of cells with normalized expression above 0 in ident.1 and ident.2, respectively. The "p_val" is the raw p-value associated with the differential expression test, while the BH-adjusted value is found in "p_val_adj". Finally, "avg_logFC" is the average log fold change difference between the two groups.
+
+Marker genes identified this way can be visualized in violin plots, feature plots, and heat maps.
+```{r view.markers}
+view.markers <- c(rownames(markers[markers$avg_log2FC > 0,])[1],
+                  rownames(markers[markers$avg_log2FC < 0,])[1])
+lapply(view.markers, function(marker){
+  VlnPlot(experiment.aggregate,
+          group.by = "subcluster",
+          features = marker) +
+    scale_fill_viridis_d(option = "turbo")
+})
+FeaturePlot(experiment.aggregate,
+            features = view.markers,
+            ncol = 2)
+DoHeatmap(experiment.aggregate,
+          group.by = "subcluster",
+          features = view.markers,
+          group.colors = viridis::turbo(length(unique(experiment.aggregate$subcluster))))
+```
+
+
+### FindAllMarkers
+
+FindAllMarkers can be used to automate this process across all clusters.
+
+```{r FindAllMarkers}
+markers <- FindAllMarkers(experiment.aggregate,
+                          only.pos = TRUE,
+                          min.pct = 0.25,
+                          thresh.use = 0.25)
+tapply(markers$p_val_adj, markers$cluster, function(x){
+  length(x < 0.05)
+})
+head(markers) %>%
+  kable() %>%
+  kable_styling("striped")
+view.markers <- tapply(markers$gene, markers$cluster, function(x){head(x,1)})
+# violin plots
+lapply(view.markers, function(marker){
+  VlnPlot(experiment.aggregate,
+          group.by = "subcluster",
+          features = marker) +
+    scale_fill_viridis_d(option = "turbo")
+})
+# feature plots
+lapply(view.markers, function(marker){
+  FeaturePlot(experiment.aggregate,
+              features = marker)
+})
+# heat map
+DoHeatmap(experiment.aggregate,
+          group.by = "subcluster",
+          features = view.markers,
+          group.colors = viridis::turbo(length(unique(experiment.aggregate$subcluster))))
+```
+
+#### Calculate mean marker expression within clusters
+You may want to get an idea of the mean expression of markers in a cluster or group of clusters. The percent expressing is provided by FindMarkers and FindAllMarkers, along with the average log fold change, but not the expression value itself. The function below calculates a mean for the supplied marker in the named cluster(s) and all other groups. Please note that this function accesses the active identity.
+```{r means}
+# ensure active identity is set to desired clustering resolution
+Idents(experiment.aggregate) <- experiment.aggregate$subcluster
+# define function
+getGeneClusterMeans <- function(feature, idents){
+  x = GetAssayData(experiment.aggregate)[feature,]
+  m = tapply(x, Idents(experiment.aggregate) %in% idents, mean)
+  names(m) = c("mean.out.of.idents", "mean.in.idents")
+  return(m[c(2,1)])
+}
+# calculate means for a single marker
+getGeneClusterMeans("SMOC2", c("1"))
+# add means to marker table (example using subset)
+markers.small <- markers[view.markers,]
+means <- matrix(mapply(getGeneClusterMeans, view.markers, markers.small$cluster), ncol = 2, byrow = TRUE)
+colnames(means) <- c("mean.in.cluster", "mean.out.of.cluster")
+rownames(means) <- view.markers
+markers.small <- cbind(markers.small, means)
+markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2FC", "p_val_adj")] %>%
+  kable() %>%
+  kable_styling("striped")
+```
+
+## Advanced visualizations
+
+Researchers may use the tree, markers, domain knowledge, and goals to identify useful clusters. This may mean adjusting PCA to use, choosing a new resolution, merging clusters together, sub-clustering, sub-setting, etc. You may also want to use automated cell type identification at this point, which will be discussed in the next section.
+
+### Address overplotting
+Single cell and single nucleus experiments may include so many cells that dimensionality reduction plots sometimes suffer from overplotting, where individual points are difficult to see. The following code addresses this by adjusting the size and opacity of the points.
+```{r alpha}
+alpha.use <- 0.4
+p <- DimPlot(experiment.aggregate,
+             group.by="subcluster",
+             pt.size=0.5,
+             reduction = "umap",
+             shuffle = TRUE) +
+  scale_color_viridis_d(option = "turbo")
+p$layers[[1]]$mapping$alpha <- alpha.use
+p + scale_alpha_continuous(range = alpha.use, guide = FALSE)
+```
+
+
+### Highlight a subset
+
+```{r highlight}
+DimPlot(experiment.aggregate,
+        group.by = "subcluster",
+        cells.highlight = CellsByIdentities(experiment.aggregate, idents = c("1", "2", "3")),
+        cols.highlight = c(viridis::viridis(3))) +
+  ggtitle("Selected clusters")
+```
+
+### Split dimensionality reduction plots
+
+```{r split}
+DimPlot(experiment.aggregate,
+        group.by = "subcluster",
+        split.by = "group") +
+  scale_color_viridis_d(option = "turbo")
+```
+
+### Plot a subset of cells
+
+Note that the object itself is unchanged by the subsetting operation.
+```{r plot.subset}
+DimPlot(experiment.aggregate,
+        group.by = "subcluster",
+        reduction = "umap",
+        cells = Cells(experiment.aggregate)[experiment.aggregate$orig.ident %in% "A001-C-007"]) +
+  scale_color_viridis_d(option = "turbo") +
+  ggtitle("A00-C-007 subcluster")
+```
+
+## Repeat with integrated data
+But what about the integrated object? Let's import that one and repeat the clustering workflow.
+```{r integrated}
+experiment.integrated <- readRDS("scRNA_workshop-05.rds")
+experiment.integrated
+experiment.integrated <- FindNeighbors(experiment.integrated, reduction = "pca", dims = 50)
+experiment.integrated <- FindClusters(experiment.integrated,
+                                     resolution = seq(0.1, 0.4, 0.1))
+cluster.resolutions <- grep("res", colnames(experiment.integrated@meta.data), value = TRUE)
+sapply(cluster.resolutions, function(res){
+  length(levels(experiment.integrated@meta.data[,res]))
+})
+lapply(cluster.resolutions, function(res){
+  DimPlot(experiment.integrated,
+          group.by = res,
+          reduction = "umap",
+          shuffle = TRUE) +
+    scale_color_viridis_d(option = "turbo")
+})
+lapply(cluster.resolutions, function(res){
+         tmp = experiment.integrated@meta.data[,c(res, "group")]
+         colnames(tmp) = c("cluster", "group")
+         ggplot(tmp, aes(x = cluster, fill = group)) +
+           geom_bar() +
+           scale_fill_viridis_d(option = "mako") +
+           theme_classic()
+})
+FeaturePlot(experiment.integrated,
+            reduction = "umap",
+            features = "KCNMA1")
+VlnPlot(experiment.integrated,
+        group.by = "integrated_snn_res.0.1",
+        features = "KCNMA1",
+        pt.size = 0.1) +
+  scale_fill_viridis_d(option = "turbo")
+Idents(experiment.integrated) <- "integrated_snn_res.0.1"
+experiment.integrated <- BuildClusterTree(experiment.integrated, dims = 1:50)
+PlotClusterTree(experiment.integrated)
+experiment.integrated <- RenameIdents(experiment.integrated,
+                                     '4' = '1',
+                                     '16' = '1',
+                                     '11' = '1',
+                                     '10' = '1')
+experiment.integrated$res.0.1_merged <- Idents(experiment.integrated)
+table(experiment.integrated$res.0.1_merged)
+new.order <- as.character(sort(as.numeric(levels(experiment.integrated$res.0.1_merged))))
+experiment.integrated$res.0.1_merged <- factor(experiment.integrated$res.0.1_merged, levels = new.order)
+DimPlot(experiment.integrated,
+        reduction = "umap",
+        group.by = "res.0.1_merged",
+        label = TRUE) +
+  scale_color_viridis_d(option = "turbo")
+```
+
+In this case, integration appears to have interfered with forming easily-interpreted clusters. There is very little relationship between location on the UMAP and cluster identity, which makes it harder to identify possible cell populations at a glance. We can add the integrated object's cluster identities to the un-integrated object if we choose, though projecting the integrated clustering onto the un-integrated UMAP is unlikely to be useful.
+```{r AddMetaData}
+identical(rownames(experiment.aggregate@meta.data), rownames(experiment.integrated@meta.data))
+experiment.aggregate <- AddMetaData(experiment.aggregate,
+                                    metadata = experiment.integrated$integrated_snn_res.0.1,
+                                    col.name = "integrated_snn_res.0.1")
+DimPlot(experiment.aggregate,
+        reduction = "umap",
+        group.by = "integrated_snn_res.0.1",
+        shuffle = TRUE) +
+  scale_color_viridis_d(option = "turbo")
+```
+
+## Automated cell type detection
+[ScType](https://www.nature.com/articles/s41467-022-28803-w) is one of many available automated cell type detection algorithms. It has the advantage of being fast and flexible; it can be used with the large human and mouse cell type database provided by the authors, with a user-defined database, or with some combination of the two.
+
+In this section, we will use ScType to assign our clusters from Seurat to a cell type based on a hierarchical external database. The database supplied with the package is human but users can supply their own data. More details are available on [Github](https://github.com/IanevskiAleksandr/sc-type).
+
+### Source ScType functions from Github
+The `source()` functions in the code box below run scripts stored in the ScType GitHub repository. These scripts add two additional functions, `gene_sets_prepare()` and `sctype_score()`, to the global environment.
+```{r source_scType}
+source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/gene_sets_prepare.R")
+source("https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/R/sctype_score_.R")
+```
+
+### Create marker database
+The authors of ScType have provided an extensive database of human and mouse cell type markers in the following tissues:
+
+* Immune system
+* Pancreas
+* Liver
+* Eye
+* Kidney
+* Brain
+* Lung
+* Adrenal
+* Heart
+* Intestine
+* Muscle
+* Placenta
+* Spleen
+* Stomach
+* Thymus
+
+To set up the database for ScType, we run the `gene_sets_prepare()` function on a URL pointing to the full database, specifying the tissue subset to retrieve.
+```{r marker_database}
+db.URL <- "https://raw.githubusercontent.com/IanevskiAleksandr/sc-type/master/ScTypeDB_full.xlsx"
+tissue <- "Intestine"
+gs.list <- gene_sets_prepare(db.URL, cell_type = "Intestine")
+```
+
+```{r View_database, eval=FALSE}
+View(gs.list)
+```
+
+The database is composed of two lists (negative and positive) of cell type markers for the specified tissue. In this case, no negative markers have been provided, so the vectors of gene names in that part of the database are empty (length 0).
+
+In addition to using the database supplied with the package, or substituting another database, it is possible to augment the provided database by changing the provided markers for an existing cell type, or adding another cell type to the object.
+
+Let's add a cell type and associated markers (markers from [PanglaoDB](https://panglaodb.se/markers.html?cell_type=%27Tuft%20cells%27#google_vignette)).
+```{r add_tuft}
+gs.list$gs_positive$`Tuft cells` <- c("SUCNR1", "FABP1", "POU2F3", "SIGLECF", "CDHR2", "AVIL", "ESPN", "LRMP", "TRPM5", "DCLK1", "TAS1R3", "SOX9", "TUBB5", "CAMK2B", "GNAT3", "IL25", "PLCB2", "GFI1B", "ATOH1", "CD24A", "ASIC5", "KLF3", "KLF6", "DRD3", "NRADD", "GNG13", "NREP", "RGS2", "RAC2", "PTGS1", "IRF7", "FFAR3", "ALOX5", "TSLP", "IL4RA", "IL13RA1", "IL17RB", "PTPRC")
+gs.list$gs_negative$`Tuft cells` <- NULL
+```
+
+### Score cells
+ScType scores every cell, summarizing the transformed and weighted expression of markers for each cell type. This generates a matrix with the dimensions cell types x cells.
+```{r score_cells}
+es.max <- sctype_score(GetAssayData(experiment.aggregate, "scale"),
+                       scaled = TRUE,
+                       gs = gs.list$gs_positive,
+                       gs2 = gs.list$gs_negative)
+# cell type scores of first cell
+es.max[,1]
+```
+
+### Score clusters
+The "ScType score" of each cluster is calculated by summing the cell-level scores within each cluster. The cell type with the largest (positive) score is the most highly enriched cell type for that cluster.
+```{r score_clusters}
+clusters <- sort(unique(experiment.aggregate$subcluster))
+tmp <- lapply(clusters, function(cluster){
+  es.max.cluster = sort(rowSums(es.max[, experiment.aggregate$subcluster == cluster]), decreasing = TRUE)
+  out = head(data.frame(subcluster = cluster,
+                        ScType = names(es.max.cluster),
+                        scores = es.max.cluster,
+                        ncells = sum(experiment.aggregate$subcluster == cluster)))
+  out$rank = 1:length(out$scores)
+  return(out)
+})
+cluster.ScType <- do.call("rbind", tmp)
+cluster.ScType %>%
+  pivot_wider(id_cols = subcluster,
+              names_from = ScType,
+              values_from = scores) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = c("striped"), fixed_thead = TRUE)
+cluster.ScType.top <- cluster.ScType %>%
+  filter(rank == 1) %>%
+  select(subcluster, ncells, ScType, scores)
+rownames(cluster.ScType.top) <- cluster.ScType.top$subcluster
+cluster.ScType.top <- cluster.ScType.top %>%
+  rename("score" = scores)
+```
+
+Once the scores have been calculated for each cluster, they can be added to the Seurat object.
+```{r add_ScType}
+subcluster.ScType <- cluster.ScType.top[experiment.aggregate$subcluster, "ScType"]
+experiment.aggregate <- AddMetaData(experiment.aggregate,
+                                    metadata = subcluster.ScType,
+                                    col.name = "subcluster_ScType")
+DimPlot(experiment.aggregate,
+        reduction = "umap",
+        group.by = "subcluster_ScType",
+        shuffle = TRUE) +
+  scale_color_viridis_d()
+```
+
+The ScType developer suggests that assignments with a score less than (number of cells in cluster)/4 are low confidence and should be set to unknown:
+```{r adjust_confidence}
+cluster.ScType.top <- cluster.ScType.top %>%
+  mutate(ScType_filtered = ifelse(score >= ncells / 4, ScType, "Unkown"))
+subcluster.ScType.filtered <- cluster.ScType.top[experiment.aggregate$subcluster, "ScType_filtered"]
+experiment.aggregate <- AddMetaData(experiment.aggregate,
+                                    metadata = subcluster.ScType.filtered,
+                                    col.name = "subcluster_ScType_filtered")
+DimPlot(experiment.aggregate,
+        reduction = "umap",
+        group.by = "subcluster_ScType_filtered",
+        shuffle = TRUE) +
+  scale_color_viridis_d()
+```
+
+## Prepare for the next section
+
+#### Save the Seurat object and download the next Rmd file
+```{r saveRDS}
+# set the finalcluster to subcluster
+experiment.aggregate$finalcluster <- experiment.aggregate$subcluster
+# save object
+saveRDS(experiment.aggregate, file="scRNA_workshop-06.rds")
+```
+
+#### Download the Rmd file
+```{r download_Rmd, eval=FALSE}
+download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/07-doublet_detection.Rmd", "07-doublet_detection.Rmd")
+```
+
+#### Session Information
+```{r sessionInfo}
+sessionInfo()
+```

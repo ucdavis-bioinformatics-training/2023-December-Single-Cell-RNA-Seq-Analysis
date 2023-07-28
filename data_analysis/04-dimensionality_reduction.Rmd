@@ -141,8 +141,8 @@ saveRDS(experiment.aggregate, file="scRNA_workshop-04.rds")
 ```
 
 #### Download Rmd
-```{r download_file}
-download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/05-doublet_detection.Rmd", "05-doublet_detection.Rmd")
+```{r download_Rmd, eval=FALSE}
+download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/05-integration.Rmd", "05-integration.Rmd")
 ```
 
 #### Session information
