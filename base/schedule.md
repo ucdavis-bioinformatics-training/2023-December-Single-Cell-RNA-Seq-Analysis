@@ -2,7 +2,7 @@
 
 All posted times are **Pacific** time zone. At least one break will be provided each morning and afternoon.
 
-### Monday
+### Monday, December 11
 
 |:----------- |:------------------- |
 |**8:50 am**  | Zoom session starts |
@@ -14,7 +14,7 @@ All posted times are **Pacific** time zone. At least one break will be provided 
 |**2:00 pm**  | Creating an expression matrix |
 |**5:00 pm** | Zoom session ends |
 
-### Tuesday
+### Tuesday, December 12
 
 |:----------- |:------------------- |
 |**8:50 am**  | Zoom session starts |
@@ -25,7 +25,7 @@ All posted times are **Pacific** time zone. At least one break will be provided 
 |**1:00 pm**  | Data Analysis Parts 1 - 3  |
 |**5:00 pm** | Zoom session ends |
 
-### Wednesday
+### Wednesday, December 13
 
 |:----------- |:------------------- |
 |**8:50 am**  | Zoom session starts |

@@ -4,7 +4,7 @@ All documentation for the workshop is best viewed from the github.io pages
 
 Single Cell RNA-Seq Analysis
 
-Jun.20, 2023 - Jun.22, 2023, 9 a.m. - 5:00 p.m daily.
+Dec. 11, 2023 - Dec. 13, 2023, 9 a.m. - 5:00 p.m daily.
 
 Contact - UC Davis Bioinformatics Core, [training.bioinformatics@ucdavis.edu](mailto:training.bioinformatics@ucdavis.edu)
 
