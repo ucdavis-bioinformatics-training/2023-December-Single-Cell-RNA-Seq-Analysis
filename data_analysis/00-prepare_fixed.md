@@ -1,7 +1,7 @@
 ---
 title: "Prepare scRNA-Seq analysis"
 author: "UC Davis Bioinformatics Core"
-date: "2023-07-20"
+date: "2023-08-01"
 output: 
   html_document:
     keep_md: TRUE
@@ -112,6 +112,7 @@ library(viridis)
 ```
 
 #### hdf5r
+HDF5 (heirarchical data format version five) files can be used to store single cell expression data (including output from Cell Ranger). The hdf5r package provides utilities for interacting with the format.
 
 ```r
 if (!any(rownames(installed.packages()) == "hdf5r")){
@@ -121,6 +122,7 @@ library(hdf5r)
 ```
 
 #### Seurat
+Seurat is an extensive package for the analysis of single cell experiments, from normalization to visualization.
 
 ```r
 if (!any(rownames(installed.packages()) == "Seurat")){
@@ -130,6 +132,7 @@ library(Seurat)
 ```
 
 #### biomaRt
+This package provides an interface to Ensembl databases.
 
 ```r
 if (!any(rownames(installed.packages()) == "biomaRt")){
@@ -139,6 +142,7 @@ library(biomaRt)
 ```
 
 #### org.Hs.eg.db
+org.Hs.eg.db contains genome-wide annotation based on Entrez Gene identifiers in the Human genome.
 
 ```r
 if (!any(rownames(installed.packages()) == "org.Hs.eg.db")){
@@ -148,6 +152,7 @@ library(org.Hs.eg.db)
 ```
 
 #### limma
+Originally developed for microarray data, limma provides functions for linear modeling and differential expression.
 
 ```r
 if (!any(rownames(installed.packages()) == "limma")){
@@ -157,6 +162,7 @@ library(limma)
 ```
 
 #### topGO
+Test gene ontology (GO) term enrichment while accounting for the topology of the GO graph.
 
 ```r
 if (!any(rownames(installed.packages()) == "topGO")){
@@ -166,6 +172,7 @@ library(topGO)
 ```
 
 #### remotes
+Some packages (or versions of packages) cannot be installed through Bioconductor. The remotes package contains tools for installing packages from a number of repositories, including GitHub.
 
 ```r
 if (!any(rownames(installed.packages()) == "remotes")){
@@ -175,6 +182,7 @@ library(remotes)
 ```
 
 #### ape
+Analysis of Phylogenetics and Evolution (ape) is used to generate and manipulate phylogenetic trees. In this workshop, we will be using ape to investigate the relationships between clusters.
 
 ```r
 if (!any(rownames(installed.packages()) == "ape")){
@@ -184,6 +192,7 @@ library(ape)
 ```
 
 #### DoubletFinder
+DoubletFinder detects multiplets within single cell or nucleus data.
 
 ```r
 if (!any(rownames(installed.packages()) == "DoubletFinder")){
@@ -193,6 +202,7 @@ library(DoubletFinder)
 ```
 
 #### openxlsx
+The openxlsx package is a suite of tools for reading and writing .xlsx files.
 
 ```r
 if (!any(rownames(installed.packages()) == "openxlsx")){
@@ -202,6 +212,7 @@ library(openxlsx)
 ```
 
 #### HGNChelper
+Both R and Excel can introduce changes to gene symbols. HGNChelper can correct gene symbols that have been altered, and convert gene symbols to valid R names.
 
 ```r
 if (!any(rownames(installed.packages()) == "HGNChelper")){
@@ -210,6 +221,7 @@ if (!any(rownames(installed.packages()) == "HGNChelper")){
 library(HGNChelper)
 ```
 
+#### Verfiy installation
 Finally, we can get the session info to ensure that all of the packages were installed and loaded correctly.
 
 ```r
@@ -218,12 +230,12 @@ sessionInfo()
 
 ### Download materials and prepare for the next section
 
-In the R console run the following command to download part 1 of data analysis
+In the R console run the following command to download part 1 of data analysis.
 
 #### Markdown template document
 
 ```r
-download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-June-Single-Cell-RNA-Seq-Analysis/main/data_analysis/scRNA_Workshop-PART1.Rmd", "scRNA_Workshop-PART1.Rmd")
+download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/01-create_object.Rmd", "01-create_object.Rmd")
 ```
 
 #### Expression matrix
@@ -237,4 +249,4 @@ tar -xzf expression_data_cellranger.tar.gz
 <div class='r_output'>
 **Some Windows users may need to use Filezilla/WinSCP to download the file instead.**
 
-When the download and extraction are complete, you should see three folders: A001-C-007, A001-C-104 and B001-A-301. Make sure "scRNA_Workshop-PART1.Rmd" file is in the same location.
+When the download and extraction are complete, you should see three folders: A001-C-007, A001-C-104 and B001-A-301. Make sure the "01-create_object.Rmd" file is in the same location.
