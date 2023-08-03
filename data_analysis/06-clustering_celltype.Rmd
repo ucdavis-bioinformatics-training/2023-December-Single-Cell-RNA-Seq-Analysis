@@ -22,6 +22,7 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(HGNChelper)
+library(ComplexHeatmap)
 set.seed(12345)
 experiment.aggregate <- readRDS("scRNA_workshop-04.rds")
 experiment.aggregate
@@ -192,11 +193,16 @@ experiment.aggregate <- FindSubCluster(experiment.aggregate,
                                        graph.name = "RNA_snn",
                                        cluster = 5,
                                        subcluster.name = "subcluster")
+experiment.aggregate$subcluster <- factor(experiment.aggregate$subcluster,
+                                          levels = c(as.character(0:4),
+                                                     "5_0", "5_1", "5_2", "5_3",
+                                                     as.character(c(6:10, 13, 14))))
 DimPlot(experiment.aggregate,
         reduction = "umap",
         group.by = "subcluster",
         shuffle = TRUE) +
   scale_color_viridis_d(option = "turbo")
+sort(unique(experiment.aggregate$subcluster))
 ```
 
 ## Subset experiment by cluster identity
@@ -259,15 +265,33 @@ FeaturePlot(experiment.aggregate,
 DoHeatmap(experiment.aggregate,
           group.by = "subcluster",
           features = view.markers,
-          group.colors = viridis::turbo(length(unique(experiment.aggregate$subcluster))))
+          group.colors = viridis::turbo(length(levels(experiment.aggregate$subcluster))))
+```
+#### Improved heatmap
+The Seurat `DoHeatmap` function provided by Seurat provides a convenient look at expression of selected genes. The ComplexHeatmap library generates heat maps with a much finer level of control.
+```{r ComplexHeatmap}
+cluster.colors <- viridis::turbo(length(levels(experiment.aggregate$subcluster)))
+names(cluster.colors) <- levels(experiment.aggregate$subcluster)
+group.colors <- viridis::mako(length(levels(experiment.aggregate$group)))
+names(group.colors) <- levels(experiment.aggregate$group)
+top.annotation <- columnAnnotation(df = experiment.aggregate@meta.data[,c("group", "subcluster")],
+                                   col = list(group = group.colors,
+                                              subcluster = cluster.colors))
+mat <- as.matrix(GetAssayData(experiment.aggregate[rownames(markers)[1:20],],
+                              slot = "data"))
+Heatmap(mat,
+        name = "normalized\ncounts",
+        show_row_dend = FALSE,
+        show_column_dend = FALSE,
+        show_column_names = FALSE,
+        top_annotation = top.annotation)
 ```
 
 
 ### FindAllMarkers
-
 FindAllMarkers can be used to automate this process across all clusters.
-
 ```{r FindAllMarkers}
+Idents(experiment.aggregate) <- "subcluster"
 markers <- FindAllMarkers(experiment.aggregate,
                           only.pos = TRUE,
                           min.pct = 0.25,
@@ -296,6 +320,14 @@ DoHeatmap(experiment.aggregate,
           group.by = "subcluster",
           features = view.markers,
           group.colors = viridis::turbo(length(unique(experiment.aggregate$subcluster))))
+mat <- as.matrix(GetAssayData(experiment.aggregate[view.markers,],
+                              slot = "data"))
+Heatmap(mat,
+        name = "normalized\ncounts",
+        show_row_dend = FALSE,
+        show_column_dend = FALSE,
+        show_column_names = FALSE,
+        top_annotation = top.annotation)
 ```
 
 #### Calculate mean marker expression within clusters
@@ -324,7 +356,6 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
 ```
 
 ## Advanced visualizations
-
 Researchers may use the tree, markers, domain knowledge, and goals to identify useful clusters. This may mean adjusting PCA to use, choosing a new resolution, merging clusters together, sub-clustering, sub-setting, etc. You may also want to use automated cell type identification at this point, which will be discussed in the next section.
 
 ### Address overplotting
@@ -343,7 +374,6 @@ p + scale_alpha_continuous(range = alpha.use, guide = FALSE)
 
 
 ### Highlight a subset
-
 ```{r highlight}
 DimPlot(experiment.aggregate,
         group.by = "subcluster",
@@ -353,7 +383,6 @@ DimPlot(experiment.aggregate,
 ```
 
 ### Split dimensionality reduction plots
-
 ```{r split}
 DimPlot(experiment.aggregate,
         group.by = "subcluster",
@@ -362,7 +391,6 @@ DimPlot(experiment.aggregate,
 ```
 
 ### Plot a subset of cells
-
 Note that the object itself is unchanged by the subsetting operation.
 ```{r plot.subset}
 DimPlot(experiment.aggregate,
@@ -547,7 +575,7 @@ DimPlot(experiment.aggregate,
 The ScType developer suggests that assignments with a score less than (number of cells in cluster)/4 are low confidence and should be set to unknown:
 ```{r adjust_confidence}
 cluster.ScType.top <- cluster.ScType.top %>%
-  mutate(ScType_filtered = ifelse(score >= ncells / 4, ScType, "Unkown"))
+  mutate(ScType_filtered = ifelse(score >= ncells / 4, ScType, "Unknown"))
 subcluster.ScType.filtered <- cluster.ScType.top[experiment.aggregate$subcluster, "ScType_filtered"]
 experiment.aggregate <- AddMetaData(experiment.aggregate,
                                     metadata = subcluster.ScType.filtered,
@@ -557,6 +585,28 @@ DimPlot(experiment.aggregate,
         group.by = "subcluster_ScType_filtered",
         shuffle = TRUE) +
   scale_color_viridis_d()
+```
+
+```{r cell_type_heat}
+types <- grep("Unknown", unique(experiment.aggregate$subcluster_ScType_filtered), value = TRUE, invert = TRUE)
+type.markers <- unlist(lapply(gs.list$gs_positive[types], function(m){
+  rownames(markers[which(m %in% rownames(markers)),])
+}))
+type.markers <- type.markers[!duplicated(type.markers)]
+type.markers.df <- data.frame(marker = type.markers,
+                              type = gsub('[0-9]', '', names(type.markers)))
+type.colors <- viridis::viridis(length(unique(type.markers.df$type)))
+names(type.colors) <- unique(type.markers.df$type)
+left.annotation <- rowAnnotation("marker" = type.markers.df$type, col = list(marker = type.colors))
+mat <- as.matrix(GetAssayData(experiment.aggregate,
+                              slot = "data")[type.markers.df$marker,])
+Heatmap(mat,
+        name = "normalized\ncounts",
+        top_annotation = top.annotation,
+        left_annotation = left.annotation,
+        show_column_dend = FALSE,
+        show_column_names = FALSE,
+        show_row_dend = FALSE)
 ```
 
 ## Prepare for the next section

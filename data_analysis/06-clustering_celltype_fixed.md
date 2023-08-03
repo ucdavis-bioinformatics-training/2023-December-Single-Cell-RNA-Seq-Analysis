@@ -1,7 +1,7 @@
 ---
 title: "Introduction to Single Cell RNA-Seq Part 6: Clustering and cell type assignment"
 author: "UCD Bioinformatics Core"
-date: "2023-07-28"
+date: "2023-08-03"
 output:
     html_document:
       keep_md: TRUE
@@ -21,6 +21,7 @@ library(tidyr)
 library(dplyr)
 library(ggplot2)
 library(HGNChelper)
+library(ComplexHeatmap)
 set.seed(12345)
 experiment.aggregate <- readRDS("scRNA_workshop-04.rds")
 experiment.aggregate
@@ -419,6 +420,10 @@ experiment.aggregate <- FindSubCluster(experiment.aggregate,
  Elapsed time: 0 seconds
 </div>
 ```r
+experiment.aggregate$subcluster <- factor(experiment.aggregate$subcluster,
+                                          levels = c(as.character(0:4),
+                                                     "5_0", "5_1", "5_2", "5_3",
+                                                     as.character(c(6:10, 13, 14))))
 DimPlot(experiment.aggregate,
         reduction = "umap",
         group.by = "subcluster",
@@ -428,6 +433,13 @@ DimPlot(experiment.aggregate,
 
 ![](06-clustering_celltype_files/figure-html/subcluster-1.png)<!-- -->
 
+```r
+sort(unique(experiment.aggregate$subcluster))
+```
+
+<div class='r_output'>  [1] 0   1   2   3   4   5_0 5_1 5_2 5_3 6   7   8   9   10  13  14 
+ Levels: 0 1 2 3 4 5_0 5_1 5_2 5_3 6 7 8 9 10 13 14
+</div>
 ## Subset experiment by cluster identity
 After exploring and refining the cluster resolution, we may have identified some clusters that are composed of cells we aren't interested in. For example, if we have identified a cluster likely composed of contaminants, this cluster can be removed from the analysis. Alternatively, if a group of clusters have been identified as particularly of interest, these can be isolated and re-analyzed.
 
@@ -583,18 +595,39 @@ FeaturePlot(experiment.aggregate,
 DoHeatmap(experiment.aggregate,
           group.by = "subcluster",
           features = view.markers,
-          group.colors = viridis::turbo(length(unique(experiment.aggregate$subcluster))))
+          group.colors = viridis::turbo(length(levels(experiment.aggregate$subcluster))))
 ```
 
 ![](06-clustering_celltype_files/figure-html/view.markers-4.png)<!-- -->
+#### Improved heatmap
+The Seurat `DoHeatmap` function provided by Seurat provides a convenient look at expression of selected genes. The ComplexHeatmap library generates heat maps with a much finer level of control.
+
+```r
+cluster.colors <- viridis::turbo(length(levels(experiment.aggregate$subcluster)))
+names(cluster.colors) <- levels(experiment.aggregate$subcluster)
+group.colors <- viridis::mako(length(levels(experiment.aggregate$group)))
+names(group.colors) <- levels(experiment.aggregate$group)
+top.annotation <- columnAnnotation(df = experiment.aggregate@meta.data[,c("group", "subcluster")],
+                                   col = list(group = group.colors,
+                                              subcluster = cluster.colors))
+mat <- as.matrix(GetAssayData(experiment.aggregate[rownames(markers)[1:20],],
+                              slot = "data"))
+Heatmap(mat,
+        name = "normalized\ncounts",
+        show_row_dend = FALSE,
+        show_column_dend = FALSE,
+        show_column_names = FALSE,
+        top_annotation = top.annotation)
+```
+
+![](06-clustering_celltype_files/figure-html/ComplexHeatmap-1.png)<!-- -->
 
 
 ### FindAllMarkers
-
 FindAllMarkers can be used to automate this process across all clusters.
 
-
 ```r
+Idents(experiment.aggregate) <- "subcluster"
 markers <- FindAllMarkers(experiment.aggregate,
                           only.pos = TRUE,
                           min.pct = 0.25,
@@ -604,8 +637,8 @@ tapply(markers$p_val_adj, markers$cluster, function(x){
 })
 ```
 
-<div class='r_output'>  5_2   10  5_1    3    8    2    7    1    4    6    0   13   14    9  5_0  5_3 
-  213  261  739 1180  342  707  641  436  750 1119  572  294  267  546  256  323
+<div class='r_output'>    0    1    2    3    4  5_0  5_1  5_2  5_3    6    7    8    9   10   13   14 
+  572  436  707 1180  750  256  739  213  323 1119  641  342  546  261  294  267
 </div>
 ```r
 head(markers) %>%
@@ -628,64 +661,64 @@ head(markers) %>%
  </thead>
 <tbody>
   <tr>
-   <td style="text-align:left;"> MUC4 </td>
+   <td style="text-align:left;"> RBFOX1 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1.794845 </td>
-   <td style="text-align:right;"> 0.845 </td>
-   <td style="text-align:right;"> 0.465 </td>
+   <td style="text-align:right;"> 1.811519 </td>
+   <td style="text-align:right;"> 0.858 </td>
+   <td style="text-align:right;"> 0.406 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:left;"> 5_2 </td>
-   <td style="text-align:left;"> MUC4 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> RBFOX1 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> SRRM2 </td>
+   <td style="text-align:left;"> NXPE1 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1.068336 </td>
-   <td style="text-align:right;"> 0.845 </td>
-   <td style="text-align:right;"> 0.673 </td>
+   <td style="text-align:right;"> 1.626459 </td>
+   <td style="text-align:right;"> 0.959 </td>
+   <td style="text-align:right;"> 0.594 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:left;"> 5_2 </td>
-   <td style="text-align:left;"> SRRM2 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> NXPE1 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> DUOX2 </td>
+   <td style="text-align:left;"> ADAMTSL1 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1.299133 </td>
-   <td style="text-align:right;"> 0.282 </td>
-   <td style="text-align:right;"> 0.074 </td>
+   <td style="text-align:right;"> 1.518101 </td>
+   <td style="text-align:right;"> 0.911 </td>
+   <td style="text-align:right;"> 0.509 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:left;"> 5_2 </td>
-   <td style="text-align:left;"> DUOX2 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> ADAMTSL1 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> GCC2 </td>
+   <td style="text-align:left;"> XIST </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1.019849 </td>
-   <td style="text-align:right;"> 0.800 </td>
-   <td style="text-align:right;"> 0.559 </td>
+   <td style="text-align:right;"> 1.362144 </td>
+   <td style="text-align:right;"> 0.856 </td>
+   <td style="text-align:right;"> 0.355 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:left;"> 5_2 </td>
-   <td style="text-align:left;"> GCC2 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> XIST </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> XAF1 </td>
+   <td style="text-align:left;"> SATB2 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1.041879 </td>
-   <td style="text-align:right;"> 0.373 </td>
-   <td style="text-align:right;"> 0.124 </td>
+   <td style="text-align:right;"> 1.161947 </td>
+   <td style="text-align:right;"> 0.939 </td>
+   <td style="text-align:right;"> 0.663 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:left;"> 5_2 </td>
-   <td style="text-align:left;"> XAF1 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> SATB2 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> CEACAM5 </td>
+   <td style="text-align:left;"> HNF1A-AS1 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1.077321 </td>
-   <td style="text-align:right;"> 0.782 </td>
-   <td style="text-align:right;"> 0.521 </td>
+   <td style="text-align:right;"> 1.215335 </td>
+   <td style="text-align:right;"> 0.881 </td>
+   <td style="text-align:right;"> 0.561 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:left;"> 5_2 </td>
-   <td style="text-align:left;"> CEACAM5 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:left;"> HNF1A-AS1 </td>
   </tr>
 </tbody>
 </table>
@@ -701,17 +734,17 @@ lapply(view.markers, function(marker){
 })
 ```
 
-<div class='r_output'> $`5_2`
+<div class='r_output'> $`0`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-1.png)<!-- -->
 
 <div class='r_output'> 
- $`10`
+ $`1`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-2.png)<!-- -->
 
 <div class='r_output'> 
- $`5_1`
+ $`2`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-3.png)<!-- -->
 
@@ -721,27 +754,27 @@ lapply(view.markers, function(marker){
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-4.png)<!-- -->
 
 <div class='r_output'> 
- $`8`
+ $`4`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-5.png)<!-- -->
 
 <div class='r_output'> 
- $`2`
+ $`5_0`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-6.png)<!-- -->
 
 <div class='r_output'> 
- $`7`
+ $`5_1`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-7.png)<!-- -->
 
 <div class='r_output'> 
- $`1`
+ $`5_2`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-8.png)<!-- -->
 
 <div class='r_output'> 
- $`4`
+ $`5_3`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-9.png)<!-- -->
 
@@ -751,32 +784,32 @@ lapply(view.markers, function(marker){
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-10.png)<!-- -->
 
 <div class='r_output'> 
- $`0`
+ $`7`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-11.png)<!-- -->
 
 <div class='r_output'> 
- $`13`
+ $`8`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-12.png)<!-- -->
 
 <div class='r_output'> 
- $`14`
+ $`9`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-13.png)<!-- -->
 
 <div class='r_output'> 
- $`9`
+ $`10`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-14.png)<!-- -->
 
 <div class='r_output'> 
- $`5_0`
+ $`13`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-15.png)<!-- -->
 
 <div class='r_output'> 
- $`5_3`
+ $`14`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-16.png)<!-- -->
 
@@ -788,17 +821,17 @@ lapply(view.markers, function(marker){
 })
 ```
 
-<div class='r_output'> $`5_2`
+<div class='r_output'> $`0`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-17.png)<!-- -->
 
 <div class='r_output'> 
- $`10`
+ $`1`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-18.png)<!-- -->
 
 <div class='r_output'> 
- $`5_1`
+ $`2`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-19.png)<!-- -->
 
@@ -808,27 +841,27 @@ lapply(view.markers, function(marker){
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-20.png)<!-- -->
 
 <div class='r_output'> 
- $`8`
+ $`4`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-21.png)<!-- -->
 
 <div class='r_output'> 
- $`2`
+ $`5_0`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-22.png)<!-- -->
 
 <div class='r_output'> 
- $`7`
+ $`5_1`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-23.png)<!-- -->
 
 <div class='r_output'> 
- $`1`
+ $`5_2`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-24.png)<!-- -->
 
 <div class='r_output'> 
- $`4`
+ $`5_3`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-25.png)<!-- -->
 
@@ -838,32 +871,32 @@ lapply(view.markers, function(marker){
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-26.png)<!-- -->
 
 <div class='r_output'> 
- $`0`
+ $`7`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-27.png)<!-- -->
 
 <div class='r_output'> 
- $`13`
+ $`8`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-28.png)<!-- -->
 
 <div class='r_output'> 
- $`14`
+ $`9`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-29.png)<!-- -->
 
 <div class='r_output'> 
- $`9`
+ $`10`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-30.png)<!-- -->
 
 <div class='r_output'> 
- $`5_0`
+ $`13`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-31.png)<!-- -->
 
 <div class='r_output'> 
- $`5_3`
+ $`14`
 </div>
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-32.png)<!-- -->
 
@@ -876,6 +909,19 @@ DoHeatmap(experiment.aggregate,
 ```
 
 ![](06-clustering_celltype_files/figure-html/FindAllMarkers-33.png)<!-- -->
+
+```r
+mat <- as.matrix(GetAssayData(experiment.aggregate[view.markers,],
+                              slot = "data"))
+Heatmap(mat,
+        name = "normalized\ncounts",
+        show_row_dend = FALSE,
+        show_column_dend = FALSE,
+        show_column_names = FALSE,
+        top_annotation = top.annotation)
+```
+
+![](06-clustering_celltype_files/figure-html/FindAllMarkers-34.png)<!-- -->
 
 #### Calculate mean marker expression within clusters
 You may want to get an idea of the mean expression of markers in a cluster or group of clusters. The percent expressing is provided by FindMarkers and FindAllMarkers, along with the average log fold change, but not the expression value itself. The function below calculates a mean for the supplied marker in the named cluster(s) and all other groups. Please note that this function accesses the active identity.
@@ -922,59 +968,11 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
  </thead>
 <tbody>
   <tr>
-   <td style="text-align:left;"> MUC4 </td>
-   <td style="text-align:left;"> 5_2 </td>
-   <td style="text-align:right;"> 2.3939995 </td>
-   <td style="text-align:right;"> 0.9712338 </td>
-   <td style="text-align:right;"> 1.7948451 </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> ARHGAP15 </td>
-   <td style="text-align:left;"> 10 </td>
-   <td style="text-align:right;"> 2.0999714 </td>
-   <td style="text-align:right;"> 0.0420769 </td>
-   <td style="text-align:right;"> 3.8168553 </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> SLC9A3 </td>
-   <td style="text-align:left;"> 5_1 </td>
-   <td style="text-align:right;"> 0.4786179 </td>
-   <td style="text-align:right;"> 0.0157107 </td>
-   <td style="text-align:right;"> 1.4194496 </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> AC012494.1 </td>
-   <td style="text-align:left;"> 3 </td>
-   <td style="text-align:right;"> 1.9829173 </td>
-   <td style="text-align:right;"> 0.0198549 </td>
-   <td style="text-align:right;"> 3.4055733 </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> CALD1 </td>
-   <td style="text-align:left;"> 8 </td>
-   <td style="text-align:right;"> 2.4889292 </td>
-   <td style="text-align:right;"> 0.0321684 </td>
-   <td style="text-align:right;"> 4.2588299 </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> CEMIP </td>
-   <td style="text-align:left;"> 2 </td>
-   <td style="text-align:right;"> 1.7103302 </td>
-   <td style="text-align:right;"> 0.1470160 </td>
-   <td style="text-align:right;"> 2.9158868 </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> DIAPH3 </td>
-   <td style="text-align:left;"> 3 </td>
-   <td style="text-align:right;"> 0.7078035 </td>
-   <td style="text-align:right;"> 0.1208302 </td>
-   <td style="text-align:right;"> 1.3733030 </td>
+   <td style="text-align:left;"> RBFOX1 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:right;"> 2.4620327 </td>
+   <td style="text-align:right;"> 0.8939034 </td>
+   <td style="text-align:right;"> 1.8115188 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -986,11 +984,59 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
+   <td style="text-align:left;"> CEMIP </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:right;"> 1.7103302 </td>
+   <td style="text-align:right;"> 0.1470160 </td>
+   <td style="text-align:right;"> 2.9158868 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> AC012494.1 </td>
+   <td style="text-align:left;"> 3 </td>
+   <td style="text-align:right;"> 1.9829173 </td>
+   <td style="text-align:right;"> 0.0198549 </td>
+   <td style="text-align:right;"> 3.4055733 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> SCNN1B </td>
-   <td style="text-align:left;"> 4 </td>
-   <td style="text-align:right;"> 2.7636801 </td>
-   <td style="text-align:right;"> 0.8965142 </td>
-   <td style="text-align:right;"> 1.9240480 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:right;"> 1.5880177 </td>
+   <td style="text-align:right;"> 0.9272231 </td>
+   <td style="text-align:right;"> 0.3324481 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> LINC00278 </td>
+   <td style="text-align:left;"> 2 </td>
+   <td style="text-align:right;"> 0.7712704 </td>
+   <td style="text-align:right;"> 0.2856815 </td>
+   <td style="text-align:right;"> 0.7323233 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> SLC9A3 </td>
+   <td style="text-align:left;"> 5_1 </td>
+   <td style="text-align:right;"> 0.4786179 </td>
+   <td style="text-align:right;"> 0.0157107 </td>
+   <td style="text-align:right;"> 1.4194496 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> MUC4 </td>
+   <td style="text-align:left;"> 1 </td>
+   <td style="text-align:right;"> 1.7107128 </td>
+   <td style="text-align:right;"> 0.8748620 </td>
+   <td style="text-align:right;"> 1.0135769 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> SELENBP1 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:right;"> 1.7071084 </td>
+   <td style="text-align:right;"> 0.8729169 </td>
+   <td style="text-align:right;"> 0.8006723 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1002,11 +1048,35 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> RBFOX1 </td>
-   <td style="text-align:left;"> 0 </td>
-   <td style="text-align:right;"> 2.4620327 </td>
-   <td style="text-align:right;"> 0.8939034 </td>
-   <td style="text-align:right;"> 1.8115188 </td>
+   <td style="text-align:left;"> DIAPH3 </td>
+   <td style="text-align:left;"> 3 </td>
+   <td style="text-align:right;"> 0.7078035 </td>
+   <td style="text-align:right;"> 0.1208302 </td>
+   <td style="text-align:right;"> 1.3733030 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> CALD1 </td>
+   <td style="text-align:left;"> 8 </td>
+   <td style="text-align:right;"> 2.4889292 </td>
+   <td style="text-align:right;"> 0.0321684 </td>
+   <td style="text-align:right;"> 4.2588299 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> CA7 </td>
+   <td style="text-align:left;"> 9 </td>
+   <td style="text-align:right;"> 2.7325679 </td>
+   <td style="text-align:right;"> 0.0402416 </td>
+   <td style="text-align:right;"> 4.5910162 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> ARHGAP15 </td>
+   <td style="text-align:left;"> 10 </td>
+   <td style="text-align:right;"> 2.0999714 </td>
+   <td style="text-align:right;"> 0.0420769 </td>
+   <td style="text-align:right;"> 3.8168553 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1025,35 +1095,10 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:right;"> 3.6169997 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
-  <tr>
-   <td style="text-align:left;"> CA7 </td>
-   <td style="text-align:left;"> 9 </td>
-   <td style="text-align:right;"> 2.7325679 </td>
-   <td style="text-align:right;"> 0.0402416 </td>
-   <td style="text-align:right;"> 4.5910162 </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> LINC00278 </td>
-   <td style="text-align:left;"> 5_2 </td>
-   <td style="text-align:right;"> 1.0227013 </td>
-   <td style="text-align:right;"> 0.3394740 </td>
-   <td style="text-align:right;"> 1.3526996 </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> SELENBP1 </td>
-   <td style="text-align:left;"> 4 </td>
-   <td style="text-align:right;"> 2.4528770 </td>
-   <td style="text-align:right;"> 0.9125702 </td>
-   <td style="text-align:right;"> 1.6300180 </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
 </tbody>
 </table>
 
 ## Advanced visualizations
-
 Researchers may use the tree, markers, domain knowledge, and goals to identify useful clusters. This may mean adjusting PCA to use, choosing a new resolution, merging clusters together, sub-clustering, sub-setting, etc. You may also want to use automated cell type identification at this point, which will be discussed in the next section.
 
 ### Address overplotting
@@ -1076,7 +1121,6 @@ p + scale_alpha_continuous(range = alpha.use, guide = FALSE)
 
 ### Highlight a subset
 
-
 ```r
 DimPlot(experiment.aggregate,
         group.by = "subcluster",
@@ -1089,7 +1133,6 @@ DimPlot(experiment.aggregate,
 
 ### Split dimensionality reduction plots
 
-
 ```r
 DimPlot(experiment.aggregate,
         group.by = "subcluster",
@@ -1100,7 +1143,6 @@ DimPlot(experiment.aggregate,
 ![](06-clustering_celltype_files/figure-html/split-1.png)<!-- -->
 
 ### Plot a subset of cells
-
 Note that the object itself is unchanged by the subsetting operation.
 
 ```r
@@ -1453,39 +1495,6 @@ cluster.ScType %>%
    <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> 10 </td>
-   <td style="text-align:right;"> -13.871817 </td>
-   <td style="text-align:right;"> 21.532493 </td>
-   <td style="text-align:right;"> 332.447412 </td>
-   <td style="text-align:right;"> 28.440689 </td>
-   <td style="text-align:right;"> -20.085597 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 185.12259 </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> 13 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 17.856316 </td>
-   <td style="text-align:right;"> 1.837349 </td>
-   <td style="text-align:right;"> -3.655264 </td>
-   <td style="text-align:right;"> -5.749935 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 331.44774 </td>
-   <td style="text-align:right;"> -2.38527 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> 14 </td>
-   <td style="text-align:right;"> -3.731304 </td>
-   <td style="text-align:right;"> -3.296859 </td>
-   <td style="text-align:right;"> -2.874269 </td>
-   <td style="text-align:right;"> -2.554377 </td>
-   <td style="text-align:right;"> -3.525360 </td>
-   <td style="text-align:right;"> -6.504726 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NA </td>
-  </tr>
-  <tr>
    <td style="text-align:left;"> 2 </td>
    <td style="text-align:right;"> -21.761310 </td>
    <td style="text-align:right;"> 41.101170 </td>
@@ -1606,6 +1615,39 @@ cluster.ScType %>%
    <td style="text-align:right;"> -30.03886 </td>
    <td style="text-align:right;"> 541.82993 </td>
   </tr>
+  <tr>
+   <td style="text-align:left;"> 10 </td>
+   <td style="text-align:right;"> -13.871817 </td>
+   <td style="text-align:right;"> 21.532493 </td>
+   <td style="text-align:right;"> 332.447412 </td>
+   <td style="text-align:right;"> 28.440689 </td>
+   <td style="text-align:right;"> -20.085597 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 185.12259 </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 13 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 17.856316 </td>
+   <td style="text-align:right;"> 1.837349 </td>
+   <td style="text-align:right;"> -3.655264 </td>
+   <td style="text-align:right;"> -5.749935 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 331.44774 </td>
+   <td style="text-align:right;"> -2.38527 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> 14 </td>
+   <td style="text-align:right;"> -3.731304 </td>
+   <td style="text-align:right;"> -3.296859 </td>
+   <td style="text-align:right;"> -2.874269 </td>
+   <td style="text-align:right;"> -2.554377 </td>
+   <td style="text-align:right;"> -3.525360 </td>
+   <td style="text-align:right;"> -6.504726 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+  </tr>
 </tbody>
 </table>
 
@@ -1638,7 +1680,7 @@ The ScType developer suggests that assignments with a score less than (number of
 
 ```r
 cluster.ScType.top <- cluster.ScType.top %>%
-  mutate(ScType_filtered = ifelse(score >= ncells / 4, ScType, "Unkown"))
+  mutate(ScType_filtered = ifelse(score >= ncells / 4, ScType, "Unknown"))
 subcluster.ScType.filtered <- cluster.ScType.top[experiment.aggregate$subcluster, "ScType_filtered"]
 experiment.aggregate <- AddMetaData(experiment.aggregate,
                                     metadata = subcluster.ScType.filtered,
@@ -1651,6 +1693,31 @@ DimPlot(experiment.aggregate,
 ```
 
 ![](06-clustering_celltype_files/figure-html/adjust_confidence-1.png)<!-- -->
+
+
+```r
+types <- grep("Unknown", unique(experiment.aggregate$subcluster_ScType_filtered), value = TRUE, invert = TRUE)
+type.markers <- unlist(lapply(gs.list$gs_positive[types], function(m){
+  rownames(markers[which(m %in% rownames(markers)),])
+}))
+type.markers <- type.markers[!duplicated(type.markers)]
+type.markers.df <- data.frame(marker = type.markers,
+                              type = gsub('[0-9]', '', names(type.markers)))
+type.colors <- viridis::viridis(length(unique(type.markers.df$type)))
+names(type.colors) <- unique(type.markers.df$type)
+left.annotation <- rowAnnotation("marker" = type.markers.df$type, col = list(marker = type.colors))
+mat <- as.matrix(GetAssayData(experiment.aggregate,
+                              slot = "data")[type.markers.df$marker,])
+Heatmap(mat,
+        name = "normalized\ncounts",
+        top_annotation = top.annotation,
+        left_annotation = left.annotation,
+        show_column_dend = FALSE,
+        show_column_names = FALSE,
+        show_row_dend = FALSE)
+```
+
+![](06-clustering_celltype_files/figure-html/cell_type_heat-1.png)<!-- -->
 
 ## Prepare for the next section
 
@@ -1690,52 +1757,58 @@ sessionInfo()
  tzcode source: internal
  
  attached base packages:
- [1] stats     graphics  grDevices utils     datasets  methods   base     
+ [1] grid      stats     graphics  grDevices utils     datasets  methods  
+ [8] base     
  
  other attached packages:
- [1] HGNChelper_0.8.1   ggplot2_3.4.2      dplyr_1.1.2        tidyr_1.3.0       
- [5] kableExtra_1.3.4   SeuratObject_4.1.3 Seurat_4.3.0.1    
+ [1] ComplexHeatmap_2.16.0 HGNChelper_0.8.1      ggplot2_3.4.2        
+ [4] dplyr_1.1.2           tidyr_1.3.0           kableExtra_1.3.4     
+ [7] SeuratObject_4.1.3    Seurat_4.3.0.1       
  
  loaded via a namespace (and not attached):
-   [1] RColorBrewer_1.1-3     rstudioapi_0.15.0      jsonlite_1.8.7        
-   [4] magrittr_2.0.3         spatstat.utils_3.0-3   farver_2.1.1          
-   [7] rmarkdown_2.23         vctrs_0.6.3            ROCR_1.0-11           
-  [10] spatstat.explore_3.2-1 webshot_0.5.5          htmltools_0.5.5       
-  [13] sass_0.4.7             sctransform_0.3.5      parallelly_1.36.0     
-  [16] KernSmooth_2.23-22     bslib_0.5.0            htmlwidgets_1.6.2     
-  [19] ica_1.0-3              plyr_1.8.8             plotly_4.10.2         
-  [22] zoo_1.8-12             cachem_1.0.8           igraph_1.5.0          
-  [25] mime_0.12              lifecycle_1.0.3        pkgconfig_2.0.3       
-  [28] Matrix_1.6-0           R6_2.5.1               fastmap_1.1.1         
-  [31] fitdistrplus_1.1-11    future_1.33.0          shiny_1.7.4.1         
-  [34] digest_0.6.33          colorspace_2.1-0       patchwork_1.1.2       
-  [37] tensor_1.5             irlba_2.3.5.1          labeling_0.4.2        
-  [40] progressr_0.13.0       fansi_1.0.4            spatstat.sparse_3.0-2 
-  [43] httr_1.4.6             polyclip_1.10-4        abind_1.4-5           
-  [46] compiler_4.3.1         withr_2.5.0            viridis_0.6.3         
-  [49] highr_0.10             MASS_7.3-60            tools_4.3.1           
-  [52] lmtest_0.9-40          ape_5.7-1              zip_2.3.0             
-  [55] httpuv_1.6.11          future.apply_1.11.0    goftest_1.2-3         
-  [58] glue_1.6.2             nlme_3.1-162           promises_1.2.0.1      
-  [61] grid_4.3.1             Rtsne_0.16             cluster_2.1.4         
-  [64] reshape2_1.4.4         generics_0.1.3         gtable_0.3.3          
-  [67] spatstat.data_3.0-1    data.table_1.14.8      sp_2.0-0              
-  [70] xml2_1.3.5             utf8_1.2.3             spatstat.geom_3.2-4   
-  [73] RcppAnnoy_0.0.21       ggrepel_0.9.3          RANN_2.6.1            
-  [76] pillar_1.9.0           stringr_1.5.0          limma_3.56.2          
-  [79] later_1.3.1            splines_4.3.1          lattice_0.21-8        
-  [82] survival_3.5-5         deldir_1.0-9           tidyselect_1.2.0      
-  [85] miniUI_0.1.1.1         pbapply_1.7-2          knitr_1.43            
-  [88] gridExtra_2.3          svglite_2.1.1          scattermore_1.2       
-  [91] xfun_0.39              matrixStats_1.0.0      stringi_1.7.12        
-  [94] lazyeval_0.2.2         yaml_2.3.7             evaluate_0.21         
-  [97] codetools_0.2-19       tibble_3.2.1           cli_3.6.1             
- [100] uwot_0.1.16            xtable_1.8-4           reticulate_1.30       
- [103] systemfonts_1.0.4      munsell_0.5.0          jquerylib_0.1.4       
- [106] Rcpp_1.0.11            globals_0.16.2         spatstat.random_3.1-5 
- [109] png_0.1-8              parallel_4.3.1         ellipsis_0.3.2        
- [112] listenv_0.9.0          viridisLite_0.4.2      scales_1.2.1          
- [115] ggridges_0.5.4         openxlsx_4.2.5.2       leiden_0.4.3          
- [118] purrr_1.0.1            rlang_1.1.1            cowplot_1.1.1         
- [121] rvest_1.0.3
+   [1] RColorBrewer_1.1-3     shape_1.4.6            rstudioapi_0.15.0     
+   [4] jsonlite_1.8.7         magrittr_2.0.3         spatstat.utils_3.0-3  
+   [7] farver_2.1.1           rmarkdown_2.23         GlobalOptions_0.1.2   
+  [10] vctrs_0.6.3            ROCR_1.0-11            spatstat.explore_3.2-1
+  [13] webshot_0.5.5          htmltools_0.5.5        sass_0.4.7            
+  [16] sctransform_0.3.5      parallelly_1.36.0      KernSmooth_2.23-22    
+  [19] bslib_0.5.0            htmlwidgets_1.6.2      ica_1.0-3             
+  [22] plyr_1.8.8             plotly_4.10.2          zoo_1.8-12            
+  [25] cachem_1.0.8           igraph_1.5.0           iterators_1.0.14      
+  [28] mime_0.12              lifecycle_1.0.3        pkgconfig_2.0.3       
+  [31] Matrix_1.6-0           R6_2.5.1               fastmap_1.1.1         
+  [34] clue_0.3-64            fitdistrplus_1.1-11    future_1.33.0         
+  [37] shiny_1.7.4.1          digest_0.6.33          colorspace_2.1-0      
+  [40] S4Vectors_0.38.1       patchwork_1.1.2        tensor_1.5            
+  [43] irlba_2.3.5.1          labeling_0.4.2         progressr_0.13.0      
+  [46] fansi_1.0.4            spatstat.sparse_3.0-2  httr_1.4.6            
+  [49] polyclip_1.10-4        abind_1.4-5            compiler_4.3.1        
+  [52] withr_2.5.0            doParallel_1.0.17      viridis_0.6.3         
+  [55] highr_0.10             MASS_7.3-60            rjson_0.2.21          
+  [58] tools_4.3.1            lmtest_0.9-40          ape_5.7-1             
+  [61] zip_2.3.0              httpuv_1.6.11          future.apply_1.11.0   
+  [64] goftest_1.2-3          glue_1.6.2             nlme_3.1-162          
+  [67] promises_1.2.0.1       Rtsne_0.16             cluster_2.1.4         
+  [70] reshape2_1.4.4         generics_0.1.3         gtable_0.3.3          
+  [73] spatstat.data_3.0-1    data.table_1.14.8      sp_2.0-0              
+  [76] xml2_1.3.5             utf8_1.2.3             BiocGenerics_0.46.0   
+  [79] spatstat.geom_3.2-4    RcppAnnoy_0.0.21       ggrepel_0.9.3         
+  [82] RANN_2.6.1             foreach_1.5.2          pillar_1.9.0          
+  [85] stringr_1.5.0          limma_3.56.2           later_1.3.1           
+  [88] circlize_0.4.15        splines_4.3.1          lattice_0.21-8        
+  [91] survival_3.5-5         deldir_1.0-9           tidyselect_1.2.0      
+  [94] miniUI_0.1.1.1         pbapply_1.7-2          knitr_1.43            
+  [97] gridExtra_2.3          IRanges_2.34.1         svglite_2.1.1         
+ [100] scattermore_1.2        stats4_4.3.1           xfun_0.39             
+ [103] matrixStats_1.0.0      stringi_1.7.12         lazyeval_0.2.2        
+ [106] yaml_2.3.7             evaluate_0.21          codetools_0.2-19      
+ [109] tibble_3.2.1           cli_3.6.1              uwot_0.1.16           
+ [112] xtable_1.8-4           reticulate_1.30        systemfonts_1.0.4     
+ [115] munsell_0.5.0          jquerylib_0.1.4        Rcpp_1.0.11           
+ [118] globals_0.16.2         spatstat.random_3.1-5  png_0.1-8             
+ [121] parallel_4.3.1         ellipsis_0.3.2         listenv_0.9.0         
+ [124] viridisLite_0.4.2      scales_1.2.1           ggridges_0.5.4        
+ [127] openxlsx_4.2.5.2       crayon_1.5.2           leiden_0.4.3          
+ [130] purrr_1.0.1            GetoptLong_1.0.5       rlang_1.1.1           
+ [133] cowplot_1.1.1          rvest_1.0.3
 </div>
