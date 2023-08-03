@@ -1,7 +1,7 @@
 ---
 title: "Introduction to Single Cell RNA-Seq Part 8: Enrichment and model-based differential expression"
 author: "Bioinformatics Core"
-date: "2023-07-28"
+date: "2023-08-03"
 output:
     html_document:
       keep_md: TRUE
