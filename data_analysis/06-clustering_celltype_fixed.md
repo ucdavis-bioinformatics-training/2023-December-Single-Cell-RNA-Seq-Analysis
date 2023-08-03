@@ -908,9 +908,10 @@ DoHeatmap(experiment.aggregate,
           group.colors = viridis::turbo(length(unique(experiment.aggregate$subcluster))))
 ```
 
-![](06-clustering_celltype_files/figure-html/FindAllMarkers-33.png)<!-- -->
+![](06-clustering_celltype_files/figure-html/FindAllMarkers_heat-1.png)<!-- -->
 
 ```r
+# ComplexHeatmap
 mat <- as.matrix(GetAssayData(experiment.aggregate[view.markers,],
                               slot = "data"))
 Heatmap(mat,
@@ -918,10 +919,11 @@ Heatmap(mat,
         show_row_dend = FALSE,
         show_column_dend = FALSE,
         show_column_names = FALSE,
+        column_split = experiment.aggregate$subcluster,
         top_annotation = top.annotation)
 ```
 
-![](06-clustering_celltype_files/figure-html/FindAllMarkers-34.png)<!-- -->
+![](06-clustering_celltype_files/figure-html/FindAllMarkers_heat-2.png)<!-- -->
 
 #### Calculate mean marker expression within clusters
 You may want to get an idea of the mean expression of markers in a cluster or group of clusters. The percent expressing is provided by FindMarkers and FindAllMarkers, along with the average log fold change, but not the expression value itself. The function below calculates a mean for the supplied marker in the named cluster(s) and all other groups. Please note that this function accesses the active identity.

@@ -315,11 +315,14 @@ lapply(view.markers, function(marker){
   FeaturePlot(experiment.aggregate,
               features = marker)
 })
+```
+```{r FindAllMarkers_heat, fig.width=10}
 # heat map
 DoHeatmap(experiment.aggregate,
           group.by = "subcluster",
           features = view.markers,
           group.colors = viridis::turbo(length(unique(experiment.aggregate$subcluster))))
+# ComplexHeatmap
 mat <- as.matrix(GetAssayData(experiment.aggregate[view.markers,],
                               slot = "data"))
 Heatmap(mat,
@@ -327,6 +330,7 @@ Heatmap(mat,
         show_row_dend = FALSE,
         show_column_dend = FALSE,
         show_column_names = FALSE,
+        column_split = experiment.aggregate$subcluster,
         top_annotation = top.annotation)
 ```
 
