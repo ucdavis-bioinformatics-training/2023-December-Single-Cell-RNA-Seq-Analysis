@@ -1,7 +1,7 @@
 ---
 title: "Introduction to Single Cell RNA-Seq Part 1: Create Seurat object"
 author: "UCD Bioinformatics Core"
-date: "2023-07-21"
+date: "2023-08-01"
 output:
     html_document:
       keep_md: TRUE
@@ -299,9 +299,15 @@ The AddMetaData function returns a new Seurat object with an additional column i
 experiment.aggregate <- AddMetaData(experiment.aggregate,
                                     metadata = experiment.metadata$group[sample.index],
             col.name = "group")
+experiment.aggregate$group <- factor(experiment.aggregate$group,
+                                     levels = c("Normal", "Polyp", "Colorectal Cancer"))
 experiment.aggregate <- AddMetaData(experiment.aggregate,
                                     metadata = experiment.metadata$run[sample.index],
                                     col.name = "run")
+experiment.aggregate$run <- factor(experiment.aggregate$run,
+                                   levels = c("A00509:113:HTNCWDMXX:1",
+                                              "A00509:116:HTLNJDMXX:1",
+                                              "A00509:126:HTLFWDMXX:1"))
 ```
 
 ## Explore the Seurat object
@@ -371,7 +377,7 @@ The Seurat `BarcodeInflectionsPlot` provides a similar graphic. In this case, be
 ```r
 experiment.aggregate <- CalculateBarcodeInflections(experiment.aggregate)
 BarcodeInflectionsPlot(experiment.aggregate) +
-  scale_color_viridis_d(option = "mako")
+  scale_color_viridis_d()
 ```
 
 ![](01-create_object_files/figure-html/barcode_inflection_plot-1.png)<!-- -->
@@ -382,7 +388,7 @@ Adding a log-scale transformation to the x-axis increases the resemblance to the
 ```r
 BarcodeInflectionsPlot(experiment.aggregate) +
   scale_x_continuous(trans = "log10") +
-  scale_color_viridis_d(option = "mako")
+  scale_color_viridis_d()
 ```
 
 ![](01-create_object_files/figure-html/barcode_inflection_plot_log-1.png)<!-- -->

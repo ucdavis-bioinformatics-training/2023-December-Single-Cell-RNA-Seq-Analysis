@@ -130,9 +130,15 @@ The AddMetaData function returns a new Seurat object with an additional column i
 experiment.aggregate <- AddMetaData(experiment.aggregate,
                                     metadata = experiment.metadata$group[sample.index],
             col.name = "group")
+experiment.aggregate$group <- factor(experiment.aggregate$group,
+                                     levels = c("Normal", "Polyp", "Colorectal Cancer"))
 experiment.aggregate <- AddMetaData(experiment.aggregate,
                                     metadata = experiment.metadata$run[sample.index],
                                     col.name = "run")
+experiment.aggregate$run <- factor(experiment.aggregate$run,
+                                   levels = c("A00509:113:HTNCWDMXX:1",
+                                              "A00509:116:HTLNJDMXX:1",
+                                              "A00509:126:HTLFWDMXX:1"))
 ```
 
 ## Explore the Seurat object
@@ -170,7 +176,7 @@ The Seurat `BarcodeInflectionsPlot` provides a similar graphic. In this case, be
 ```{r barcode_inflection_plot}
 experiment.aggregate <- CalculateBarcodeInflections(experiment.aggregate)
 BarcodeInflectionsPlot(experiment.aggregate) +
-  scale_color_viridis_d(option = "mako")
+  scale_color_viridis_d()
 ```
 
 Adding a log-scale transformation to the x-axis increases the resemblance to the Cell Ranger plot. Values on the y-axis are already log-transformed.
@@ -178,7 +184,7 @@ Adding a log-scale transformation to the x-axis increases the resemblance to the
 ```{r barcode_inflection_plot_log}
 BarcodeInflectionsPlot(experiment.aggregate) +
   scale_x_continuous(trans = "log10") +
-  scale_color_viridis_d(option = "mako")
+  scale_color_viridis_d()
 ```
 
 ## Prepare for the next section

@@ -1,7 +1,7 @@
 ---
 title: "Introduction to Single Cell RNA-Seq Part 4: Dimensionality reduction"
 author: "UCD Bioinformatics Core"
-date: "2023-07-28"
+date: "2023-08-01"
 output:
     html_document:
       keep_md: TRUE
