@@ -122,6 +122,15 @@ if (!any(rownames(installed.packages()) == "Seurat")){
 library(Seurat)
 ```
 
+#### ComplexHeatmap
+ComplexHeatmap produces beautiful, highly-customizable heat maps.
+```{r}
+if (!any(rownames(installed.packages()) == "ComplexHeatmap")){
+  BiocManager::install("ComplexHeatmap")
+}
+library(ComplexHeatmap)
+```
+
 #### biomaRt
 This package provides an interface to Ensembl databases.
 ```{r}

@@ -1,8 +1,8 @@
 ---
 title: "Prepare scRNA-Seq analysis"
 author: "UC Davis Bioinformatics Core"
-date: "2023-08-01"
-output:
+date: "2023-08-03"
+output: 
   html_document:
     keep_md: TRUE
     toc: TRUE
@@ -131,6 +131,16 @@ if (!any(rownames(installed.packages()) == "Seurat")){
 library(Seurat)
 ```
 
+#### ComplexHeatmap
+ComplexHeatmap produces beautiful, highly-customizable heat maps.
+
+```r
+if (!any(rownames(installed.packages()) == "ComplexHeatmap")){
+  BiocManager::install("ComplexHeatmap")
+}
+library(ComplexHeatmap)
+```
+
 #### biomaRt
 This package provides an interface to Ensembl databases.
 
@@ -246,8 +256,7 @@ In Rstudio, navigate to the terminal tab (next to the console). This gives you a
 ```bash
 scp username@tadpole.genomecenter.ucdavis.edu:/share/workshop/scRNA_workshop/cellranger_outs/expression_data_cellranger.tar.gz ./
 tar -xzf expression_data_cellranger.tar.gz
-```
-
+<div class='r_output'>
 **Some Windows users may need to use Filezilla/WinSCP to download the file instead.**
 
 When the download and extraction are complete, you should see three folders: A001-C-007, A001-C-104 and B001-A-301. Make sure the "01-create_object.Rmd" file is in the same location.
