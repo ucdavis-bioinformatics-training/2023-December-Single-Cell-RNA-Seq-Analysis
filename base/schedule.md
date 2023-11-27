@@ -20,7 +20,7 @@ All posted times are **Pacific** time zone. At least one break will be provided 
 |**8:50 am**  | Zoom session starts |
 |**9:00 am**  | Introduction to R |
 |**11:00 am**  | Installing R packages |
-|**11:30 am**  | 10X Genomics Sponsor Talk |
+|**11:30 am**  | Parse BioSciences Sponsor Talk |
 |**12:00 pm**  | Lunch |
 |**1:00 pm**  | Data Analysis Parts 1 - 3  |
 |**5:00 pm** | Zoom session ends |
@@ -30,7 +30,7 @@ All posted times are **Pacific** time zone. At least one break will be provided 
 |:----------- |:------------------- |
 |**8:50 am**  | Zoom session starts |
 |**9:00 am**   | Data Analysis Parts 4 - 5  |
-|**11:30 am**  | Parse BioSciences Sponsor Talk |
+|**11:30 am**  | 10X Genomics Sponsor Talk |
 |**12:00 pm**  | Lunch |
 |**1:00 pm**   | Data Analysis Parts 6 - 8  |
 |**5:00 pm** | Zoom session ends |
