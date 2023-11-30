@@ -92,7 +92,7 @@ For smaller experiments < 5000 cells, the R packages [`SingleCellExperiment`](ht
 
 If you prefer Python, [`scanpy`](https://scanpy.readthedocs.io/en/stable/) is a good choice.
 
-A nice page keeping track of single-cell software can be found [here](https://github.com/seandavi/awesome-single-cell).
+A nice starting point to learn about single-cell software can be found [here](https://github.com/seandavi/awesome-single-cell).
 
 ## 10X Genomics generation of expression matrix with cellranger
 
