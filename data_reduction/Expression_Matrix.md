@@ -376,7 +376,7 @@ Cell Ranger does produce a more readable HTML report with the same statistics an
 	2. Review the metrics_summary.csv file. What was the total number of reads in this sample?
 	3. Use `head` to look at the first few lines of the files under raw_feature_bc_matrix and filtered_feature_bc_matrix. See if you can determine the difference between the raw and filtered results.
 
-In the interest of time, the dataset we use for this step is a small subset of the original data. The cellranger summary file is [here](fullset_web_summary.html)
+In the interest of time, the dataset we use for this step is a small subset of the original data. The cellranger summary file for the full dataset is [here](fullset_web_summary.html)
 
 ---
 
