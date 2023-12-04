@@ -517,15 +517,16 @@ call="split-pipe \
 
 The "sample_plate.txt" has two columns separated by whitespace. The first column is the sample ID/name and the second column is the plate ID. An example is show below:
 
-S1 A1-A4
-S2 A5-A8
-S3 A9-A12
-S4 B1-B4
-S5 B5-B8
-S6 B9-B12
-S7 C1-C4
-S8 C5-C8
-S9 C9-C12
+S1 A1-A4 \
+S2 A5-A8 \
+S3 A9-A12 \
+S4 B1-B4 \
+S5 B5-B8 \
+S6 B9-B12 \
+S7 C1-C4 \
+S8 C5-C8 \
+S9 C9-C12 \
+S10 D1-D12
 
 
 
