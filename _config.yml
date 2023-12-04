@@ -42,7 +42,7 @@ navigation:
 
   - heading: scRNAseq Analysis
   - title: Prepare scRNAseq Analysis
-    url: data_analysis/00-prepare_fixed
+    url: data_analysis/00-prepare
   - title: Part 1- Create object
     url: data_analysis/01-create_object_fixed
   - title: Part 2- Filtering
