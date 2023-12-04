@@ -353,7 +353,7 @@ Cell Ranger does produce a more readable HTML report with the same statistics an
 4. Copy the SLURM script to your **scrnaseq_example** folder and do a test run.
 
     ```bash
-		mkdir -p /share/workshop/scRNA_workshop/$USER/scrnaseq_example/scripts/slurmout
+    mkdir -p /share/workshop/scRNA_workshop/$USER/scrnaseq_example/scripts/slurmout
     cd /share/workshop/scRNA_workshop/$USER/scrnaseq_example/scripts
     cp /share/workshop/scRNA_workshop/Software/cellranger-counts.slurm .
     ```
