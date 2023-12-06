@@ -44,7 +44,7 @@ navigation:
   - title: Prepare scRNAseq Analysis
     url: data_analysis/00-prepare
   - title: Part 1- Create object
-    url: data_analysis/01-create_object_fixed
+    url: data_analysis/01-create_object
   - title: Part 2- Filtering
     url: data_analysis/02-filtering_fixed
   - title: Part 3- Normalization and scaling
