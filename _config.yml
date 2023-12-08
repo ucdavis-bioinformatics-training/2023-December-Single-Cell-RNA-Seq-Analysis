@@ -50,12 +50,12 @@ navigation:
   - title: Part 3- Normalization and scaling
     url: data_analysis/03-normalize_scale
   - title: Part 4- Dimensionality reduction
-    url: data_analysis/04-dimensionality_reduction_fixed
-  - title: Part 5- Integration
-    url: data_analysis/05-integration_fixed
-  - title: Part 6- Clustering and cell type
-    url: data_analysis/06-clustering_celltype_fixed
+    url: data_analysis/04-dimensionality_reduction
+  - title: Part 5- Clustering and cell type
+    url: data_analysis/05-clustering_celltype
+  - title: Part 6- Enrichment and DE
+    url: data_analysis/06-de_enrichment
   - title: Part 7- Doublet detection
-    url: data_analysis/07-doublet_detection_fixed
-  - title: Part 8- Enrichment and DE
-    url: data_analysis/08-de_enrichment_fixed
+    url: data_analysis/07-doublet_detection
+  - title: Part 8- Integration
+    url: data_analysis/08-integration
