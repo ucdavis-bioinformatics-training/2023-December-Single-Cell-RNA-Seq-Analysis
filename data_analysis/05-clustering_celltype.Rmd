@@ -143,7 +143,7 @@ In many experiments, the clustering resolution does not need to be uniform acros
 ```{r merge}
 experiment.aggregate <- RenameIdents(experiment.aggregate,
                                      '11' = '10',
-                                     '12' = '8')
+                                     '12' = '13')
 experiment.aggregate$res.0.4_merged <- Idents(experiment.aggregate)
 table(experiment.aggregate$res.0.4_merged)
 experiment.aggregate@meta.data %>%
@@ -558,7 +558,7 @@ saveRDS(experiment.aggregate, file="scRNA_workshop-05.rds")
 ```
 
 #### Download the Rmd file
-```{r download_Rmd, eval=FALSE}
+```{r download_Rmd, eval=TRUE}
 download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/06-de_enrichment.Rmd", "06-de_enrichment.Rmd")
 ```
 

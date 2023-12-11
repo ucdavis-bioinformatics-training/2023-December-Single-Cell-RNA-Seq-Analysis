@@ -1,7 +1,7 @@
 ---
 title: "Introduction to Single Cell RNA-Seq Part 8: Integration"
 author: "UCD Bioinformatics Core"
-date: "2023-12-07"
+date: "2023-12-10"
 output:
     html_document:
       keep_md: TRUE
@@ -36,12 +36,13 @@ experiment.split <- SplitObject(experiment.aggregate, split.by = "orig.ident")
 rm(experiment.aggregate)
 ```
 
-Each object is then normalized.
+Each object is then normalized and variable features detected. CellCycleScoring is run here for later visualization purpose, and is not required for integration purpose.
 
 ```r
 experiment.split <- lapply(experiment.split, function(sce){
   sce = NormalizeData(sce, normalization.method = "LogNormalize", scale.factor = 10000)
   sce = CellCycleScoring(sce, s.features = cc.genes$s.genes, g2m.features = cc.genes$g2m.genes, set.ident = FALSE)
+  sce = FindVariableFeatures(sce, selection.method = "vst", nfeatures = 2000)
 })
 ```
 
@@ -53,7 +54,7 @@ features <- SelectIntegrationFeatures(object.list = experiment.split)
 ```
 
 ## Scale data and run PCA
-Once integration features have been identified, we can scale the data and run the PCA.
+Once integration features have been identified, we can scale the data and run the PCA, which is required for finding the integration anchors.
 
 ```r
 experiment.split <- lapply(experiment.split,function(sce){
@@ -63,7 +64,7 @@ experiment.split <- lapply(experiment.split,function(sce){
 ```
 
 ## Idenfity integration anchors
-The integration anchors are pairs of cells that are mutual nearest neighbors on the . These may be calculated either for each Seurat object relative to a reference object, or pairwise between all objects if no reference is provided.
+The integration anchors are pairs of cells that are mutual nearest neighbors on the shared low-dimensional representation. These may be calculated either for each Seurat object relative to a reference object, or pairwise between all objects if no reference is provided.
 
 ```r
 anchors <- FindIntegrationAnchors(object.list = experiment.split, anchor.features = features, reduction = "rpca")
@@ -73,19 +74,21 @@ anchors <- FindIntegrationAnchors(object.list = experiment.split, anchor.feature
 
 ```r
 experiment.integrated <- IntegrateData(anchorset = anchors)
+experiment.integrated$group <- factor(experiment.integrated$group, levels=c("Normal", "Polyp", "Colorectal Cancer"))
 ```
 The new experiment.integrated object has two assays: RNA and integrated. The RNA assay contains the normalized, scaled data from the individual experiment.split objects merged into a single table, while the data in the integrated assay has been scaled in such a way that it is no longer appropriate to use this assay for differential expression.
 
 The authors recommend using the integrated assay for clustering and visualization (UMAP plots).
 
 ## Impact of integration
-In the dimensionality reduction section we performed PCA on the complete experiment.aggregate object, where we used the vars.to.regress argument of the ScaleData function to adjust for cell cycle, nucleus integrity, and sequencing depth. The PCA biplot looked like this:
+In the dimensionality reduction section we performed PCA on the un-integrated experiment.aggregate object, where we used the vars.to.regress argument of the ScaleData function to adjust for cell cycle, nucleus integrity, and sequencing depth. The PCA biplot looked like this:
 
 ![Previous PCA plot](04-dimensionality_reduction_files/figure-html/plot_pca-1.png)
 
 After integration, the appearance of the PCA biplot has changed; cells no longer separate by group.
 
 ```r
+DefaultAssay(experiment.integrated) <- "integrated"
 experiment.integrated <- ScaleData(experiment.integrated, assay="integrated")
 experiment.integrated <- RunPCA(experiment.integrated, assay="integrated")
 DimPlot(experiment.integrated,
@@ -164,47 +167,47 @@ DimPlot(experiment.integrated,
 
 
 ```r
-experiment.integrated <- FindNeighbors(experiment.integrated, reduction = "pca", dims = 50)
+experiment.integrated <- FindNeighbors(experiment.integrated, reduction = "pca", dims = 1:50)
 experiment.integrated <- FindClusters(experiment.integrated,
-                                     resolution = seq(0.1, 0.4, 0.1))
+                                     resolution = seq(0.04, 0.07, 0.01))
 ```
 
 ```
 ## Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 ## 
 ## Number of nodes: 6313
-## Number of edges: 105606
+## Number of edges: 275263
 ## 
 ## Running Louvain algorithm...
-## Maximum modularity in 10 random starts: 0.9894
-## Number of communities: 17
+## Maximum modularity in 10 random starts: 0.9801
+## Number of communities: 8
 ## Elapsed time: 0 seconds
 ## Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 ## 
 ## Number of nodes: 6313
-## Number of edges: 105606
+## Number of edges: 275263
 ## 
 ## Running Louvain algorithm...
-## Maximum modularity in 10 random starts: 0.9842
-## Number of communities: 23
+## Maximum modularity in 10 random starts: 0.9775
+## Number of communities: 9
 ## Elapsed time: 0 seconds
 ## Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 ## 
 ## Number of nodes: 6313
-## Number of edges: 105606
+## Number of edges: 275263
 ## 
 ## Running Louvain algorithm...
-## Maximum modularity in 10 random starts: 0.9800
-## Number of communities: 28
+## Maximum modularity in 10 random starts: 0.9750
+## Number of communities: 9
 ## Elapsed time: 0 seconds
 ## Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
 ## 
 ## Number of nodes: 6313
-## Number of edges: 105606
+## Number of edges: 275263
 ## 
 ## Running Louvain algorithm...
-## Maximum modularity in 10 random starts: 0.9764
-## Number of communities: 35
+## Maximum modularity in 10 random starts: 0.9724
+## Number of communities: 9
 ## Elapsed time: 0 seconds
 ```
 
@@ -216,10 +219,19 @@ sapply(cluster.resolutions, function(res){
 ```
 
 ```
-## integrated_snn_res.0.1 integrated_snn_res.0.2 integrated_snn_res.0.3 
-##                     17                     23                     28 
-## integrated_snn_res.0.4 
-##                     35
+## integrated_snn_res.0.04 integrated_snn_res.0.05 integrated_snn_res.0.06 
+##                       8                       9                       9 
+## integrated_snn_res.0.07 
+##                       9
+```
+
+```r
+cluster.resolutions
+```
+
+```
+## [1] "integrated_snn_res.0.04" "integrated_snn_res.0.05"
+## [3] "integrated_snn_res.0.06" "integrated_snn_res.0.07"
 ```
 
 ```r
@@ -307,7 +319,7 @@ FeaturePlot(experiment.integrated,
 
 ```r
 VlnPlot(experiment.integrated,
-        group.by = "integrated_snn_res.0.1",
+        group.by = "integrated_snn_res.0.07",
         features = "KCNMA1",
         pt.size = 0.1) +
   scale_fill_viridis_d(option = "turbo")
@@ -316,40 +328,12 @@ VlnPlot(experiment.integrated,
 ![](08-integration_files/figure-html/clusters.integrated-10.png)<!-- -->
 
 ```r
-Idents(experiment.integrated) <- "integrated_snn_res.0.1"
+Idents(experiment.integrated) <- "integrated_snn_res.0.07"
 experiment.integrated <- BuildClusterTree(experiment.integrated, dims = 1:50)
 PlotClusterTree(experiment.integrated)
 ```
 
 ![](08-integration_files/figure-html/clusters.integrated-11.png)<!-- -->
-
-```r
-experiment.integrated <- RenameIdents(experiment.integrated,
-                                     '4' = '1',
-                                     '16' = '1',
-                                     '11' = '1',
-                                     '10' = '1')
-experiment.integrated$res.0.1_merged <- Idents(experiment.integrated)
-table(experiment.integrated$res.0.1_merged)
-```
-
-```
-## 
-##    1    0    2    3    5    6    7    8    9   12   13   14   15 
-## 1770  527  490  472  460  449  406  379  344  272  265  257  222
-```
-
-```r
-new.order <- as.character(sort(as.numeric(levels(experiment.integrated$res.0.1_merged))))
-experiment.integrated$res.0.1_merged <- factor(experiment.integrated$res.0.1_merged, levels = new.order)
-DimPlot(experiment.integrated,
-        reduction = "umap",
-        group.by = "res.0.1_merged",
-        label = TRUE) +
-  scale_color_viridis_d(option = "turbo")
-```
-
-![](08-integration_files/figure-html/clusters.integrated-12.png)<!-- -->
 
 
 
@@ -364,11 +348,11 @@ identical(rownames(experiment.aggregate@meta.data), rownames(experiment.integrat
 
 ```r
 experiment.aggregate <- AddMetaData(experiment.aggregate,
-                                    metadata = experiment.integrated$integrated_snn_res.0.1,
-                                    col.name = "integrated_snn_res.0.1")
+                                    metadata = experiment.integrated$integrated_snn_res.0.07,
+                                    col.name = "integrated_snn_res.0.07")
 DimPlot(experiment.aggregate,
         reduction = "umap",
-        group.by = "integrated_snn_res.0.1",
+        group.by = "integrated_snn_res.0.07",
         shuffle = TRUE) +
   scale_color_viridis_d(option = "turbo")
 ```

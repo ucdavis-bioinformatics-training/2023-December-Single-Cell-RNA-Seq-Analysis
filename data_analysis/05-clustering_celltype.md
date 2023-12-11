@@ -1,7 +1,7 @@
 ---
 title: "Introduction to Single Cell RNA-Seq Part 5: Clustering and cell type assignment"
 author: "UCD Bioinformatics Core"
-date: "2023-12-07"
+date: "2023-12-10"
 output:
     html_document:
       keep_md: TRUE
@@ -336,15 +336,15 @@ In many experiments, the clustering resolution does not need to be uniform acros
 ```r
 experiment.aggregate <- RenameIdents(experiment.aggregate,
                                      '11' = '10',
-                                     '12' = '8')
+                                     '12' = '13')
 experiment.aggregate$res.0.4_merged <- Idents(experiment.aggregate)
 table(experiment.aggregate$res.0.4_merged)
 ```
 
 ```
 ## 
-##   10    8    0    1    2    3    4    5    6    7    9   13   14 
-##  107  213 1391 1009  916  657  655  613  413  189  102   25   23
+##   10   13    0    1    2    3    4    5    6    7    8    9   14 
+##  107   58 1391 1009  916  657  655  613  413  189  180  102   23
 ```
 
 ```r
@@ -384,7 +384,7 @@ levels(experiment.aggregate$res.0.4_merged)
 ```
 
 ```
-##  [1] "10" "8"  "0"  "1"  "2"  "3"  "4"  "5"  "6"  "7"  "9"  "13" "14"
+##  [1] "10" "13" "0"  "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "14"
 ```
 
 ```r
@@ -394,7 +394,7 @@ levels(experiment.aggregate$res.0.4_merged)
 ```
 
 ```
-##  [1] "0"  "10" "8"  "1"  "2"  "3"  "4"  "5"  "6"  "7"  "9"  "13" "14"
+##  [1] "0"  "10" "13" "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "14"
 ```
 
 ```r
@@ -679,7 +679,7 @@ tapply(markers$p_val_adj, markers$cluster, function(x){
 
 ```
 ##    0    1    2    3    4  5_0  5_1  5_2  5_3    6    7    8    9   10   13   14 
-##  552  700  436  775 1187  250  749  223  333 1117  329  419  255  327  267  296
+##  552  700  436  775 1187  250  749  223  333 1117  329  532  255  327  257  296
 ```
 
 ```r
@@ -1168,9 +1168,9 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
   <tr>
    <td style="text-align:left;"> CA7 </td>
    <td style="text-align:left;"> 8 </td>
-   <td style="text-align:right;"> 2.3143766 </td>
-   <td style="text-align:right;"> 0.0398310 </td>
-   <td style="text-align:right;"> 4.3539112 </td>
+   <td style="text-align:right;"> 2.7054238 </td>
+   <td style="text-align:right;"> 0.0405927 </td>
+   <td style="text-align:right;"> 4.5800381 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1192,9 +1192,9 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
   <tr>
    <td style="text-align:left;"> KCNB2 </td>
    <td style="text-align:left;"> 13 </td>
-   <td style="text-align:right;"> 2.7863886 </td>
-   <td style="text-align:right;"> 0.0160933 </td>
-   <td style="text-align:right;"> 4.9312607 </td>
+   <td style="text-align:right;"> 2.0897079 </td>
+   <td style="text-align:right;"> 0.0079379 </td>
+   <td style="text-align:right;"> 4.4642037 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1508,13 +1508,13 @@ cluster.ScType %>%
   <tr>
    <td style="text-align:left;"> 8 </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 28.385713 </td>
-   <td style="text-align:right;"> -14.4077999 </td>
-   <td style="text-align:right;"> -6.125553 </td>
+   <td style="text-align:right;"> 10.178259 </td>
+   <td style="text-align:right;"> -16.7005497 </td>
+   <td style="text-align:right;"> -2.699479 </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> -23.007812 </td>
-   <td style="text-align:right;"> 536.2673523 </td>
-   <td style="text-align:right;"> 282.79587 </td>
+   <td style="text-align:right;"> -17.729215 </td>
+   <td style="text-align:right;"> 538.1786695 </td>
+   <td style="text-align:right;"> -30.89682 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> 9 </td>
@@ -1540,14 +1540,14 @@ cluster.ScType %>%
   </tr>
   <tr>
    <td style="text-align:left;"> 13 </td>
-   <td style="text-align:right;"> -3.7296865 </td>
-   <td style="text-align:right;"> -3.306578 </td>
-   <td style="text-align:right;"> -2.8652627 </td>
-   <td style="text-align:right;"> -2.551781 </td>
-   <td style="text-align:right;"> -6.514998 </td>
-   <td style="text-align:right;"> -3.539311 </td>
+   <td style="text-align:right;"> -10.8861167 </td>
+   <td style="text-align:right;"> 14.900876 </td>
+   <td style="text-align:right;"> -0.5725128 </td>
+   <td style="text-align:right;"> -5.977856 </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> -8.817908 </td>
    <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 304.47051 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> 14 </td>

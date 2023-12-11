@@ -114,7 +114,7 @@ write.csv(out, file = "cluster10_Normal-Colorectal.Cancer_topTable.csv")
 ## Prepare for the next section
 
 #### Download Rmd document
-```{r download_Rmd, eval=F}
+```{r download_Rmd, eval=TRUE}
 download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/07-doublet_detection.Rmd", "07-doublet_detection.Rmd")
 ```
 

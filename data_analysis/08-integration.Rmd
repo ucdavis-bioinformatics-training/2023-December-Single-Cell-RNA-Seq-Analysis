@@ -1,5 +1,5 @@
 ---
-title: "Introduction to Single Cell RNA-Seq Part 5: Integration"
+title: "Introduction to Single Cell RNA-Seq Part 8: Integration"
 author: "UCD Bioinformatics Core"
 date: "`r Sys.Date()`"
 output:
@@ -7,7 +7,7 @@ output:
       keep_md: TRUE
       toc: TRUE
 ---
-# Introduction to Single Cell RNA-Seq Part 5: Integration
+# Introduction to Single Cell RNA-Seq Part 8: Integration
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(message = FALSE, warning = FALSE, error = FALSE)
 ```
@@ -36,11 +36,12 @@ experiment.split <- SplitObject(experiment.aggregate, split.by = "orig.ident")
 rm(experiment.aggregate)
 ```
 
-Each object is then normalized.
+Each object is then normalized and variable features detected. CellCycleScoring is run here for later visualization purpose, and is not required for integration purpose.
 ```{r prepare}
 experiment.split <- lapply(experiment.split, function(sce){
   sce = NormalizeData(sce, normalization.method = "LogNormalize", scale.factor = 10000)
   sce = CellCycleScoring(sce, s.features = cc.genes$s.genes, g2m.features = cc.genes$g2m.genes, set.ident = FALSE)
+  sce = FindVariableFeatures(sce, selection.method = "vst", nfeatures = 2000)
 })
 ```
 
@@ -51,7 +52,7 @@ features <- SelectIntegrationFeatures(object.list = experiment.split)
 ```
 
 ## Scale data and run PCA
-Once integration features have been identified, we can scale the data and run the PCA.
+Once integration features have been identified, we can scale the data and run the PCA, which is required for finding the integration anchors.
 ```{r ScaleData}
 experiment.split <- lapply(experiment.split,function(sce){
   sce = ScaleData(sce, features = features, vars.to.regress = c("S.Score", "G2M.Score", "percent_MT", "nFeature_RNA"))
@@ -60,7 +61,7 @@ experiment.split <- lapply(experiment.split,function(sce){
 ```
 
 ## Idenfity integration anchors
-The integration anchors are pairs of cells that are mutual nearest neighbors on the . These may be calculated either for each Seurat object relative to a reference object, or pairwise between all objects if no reference is provided.
+The integration anchors are pairs of cells that are mutual nearest neighbors on the shared low-dimensional representation. These may be calculated either for each Seurat object relative to a reference object, or pairwise between all objects if no reference is provided.
 ```{r FindIntegrationAnchors}
 anchors <- FindIntegrationAnchors(object.list = experiment.split, anchor.features = features, reduction = "rpca")
 ```
@@ -68,18 +69,20 @@ anchors <- FindIntegrationAnchors(object.list = experiment.split, anchor.feature
 ## Integrate
 ```{r IntegrateData}
 experiment.integrated <- IntegrateData(anchorset = anchors)
+experiment.integrated$group <- factor(experiment.integrated$group, levels=c("Normal", "Polyp", "Colorectal Cancer"))
 ```
 The new experiment.integrated object has two assays: RNA and integrated. The RNA assay contains the normalized, scaled data from the individual experiment.split objects merged into a single table, while the data in the integrated assay has been scaled in such a way that it is no longer appropriate to use this assay for differential expression.
 
 The authors recommend using the integrated assay for clustering and visualization (UMAP plots).
 
 ## Impact of integration
-In the dimensionality reduction section we performed PCA on the complete experiment.aggregate object, where we used the vars.to.regress argument of the ScaleData function to adjust for cell cycle, nucleus integrity, and sequencing depth. The PCA biplot looked like this:
+In the dimensionality reduction section we performed PCA on the un-integrated experiment.aggregate object, where we used the vars.to.regress argument of the ScaleData function to adjust for cell cycle, nucleus integrity, and sequencing depth. The PCA biplot looked like this:
 
 ![Previous PCA plot](04-dimensionality_reduction_files/figure-html/plot_pca-1.png)
 
 After integration, the appearance of the PCA biplot has changed; cells no longer separate by group.
 ```{r PCA}
+DefaultAssay(experiment.integrated) <- "integrated"
 experiment.integrated <- ScaleData(experiment.integrated, assay="integrated")
 experiment.integrated <- RunPCA(experiment.integrated, assay="integrated")
 DimPlot(experiment.integrated,
@@ -125,18 +128,67 @@ DimPlot(experiment.integrated,
   scale_color_viridis_d()
 ```
 
-## Prepare for the next section
+### Clusters using the integrated data
+
+```{r clusters.integrated}
+experiment.integrated <- FindNeighbors(experiment.integrated, reduction = "pca", dims = 1:50)
+experiment.integrated <- FindClusters(experiment.integrated,
+                                     resolution = seq(0.04, 0.07, 0.01))
+cluster.resolutions <- grep("res", colnames(experiment.integrated@meta.data), value = TRUE)
+sapply(cluster.resolutions, function(res){
+  length(levels(experiment.integrated@meta.data[,res]))
+})
+cluster.resolutions
+lapply(cluster.resolutions, function(res){
+  DimPlot(experiment.integrated,
+          group.by = res,
+          reduction = "umap",
+          shuffle = TRUE) +
+    scale_color_viridis_d(option = "turbo")
+})
+lapply(cluster.resolutions, function(res){
+         tmp = experiment.integrated@meta.data[,c(res, "group")]
+         colnames(tmp) = c("cluster", "group")
+         ggplot(tmp, aes(x = cluster, fill = group)) +
+           geom_bar() +
+           scale_fill_viridis_d(option = "mako") +
+           theme_classic()
+})
+FeaturePlot(experiment.integrated,
+            reduction = "umap",
+            features = "KCNMA1")
+VlnPlot(experiment.integrated,
+        group.by = "integrated_snn_res.0.07",
+        features = "KCNMA1",
+        pt.size = 0.1) +
+  scale_fill_viridis_d(option = "turbo")
+Idents(experiment.integrated) <- "integrated_snn_res.0.07"
+experiment.integrated <- BuildClusterTree(experiment.integrated, dims = 1:50)
+PlotClusterTree(experiment.integrated)
+```
+
+
+```{r AddMetaData}
+experiment.aggregate <- readRDS("scRNA_workshop-05.rds")
+identical(rownames(experiment.aggregate@meta.data), rownames(experiment.integrated@meta.data))
+experiment.aggregate <- AddMetaData(experiment.aggregate,
+                                    metadata = experiment.integrated$integrated_snn_res.0.07,
+                                    col.name = "integrated_snn_res.0.07")
+DimPlot(experiment.aggregate,
+        reduction = "umap",
+        group.by = "integrated_snn_res.0.07",
+        shuffle = TRUE) +
+  scale_color_viridis_d(option = "turbo")
+```
+
+In this case, integration appears to have interfered with forming easily-interpreted clusters. There is very little relationship between location on the UMAP and cluster identity, which makes it harder to identify possible cell populations at a glance. We can add the integrated object's cluster identities to the un-integrated object if we choose, though projecting the integrated clustering onto the un-integrated UMAP is unlikely to be useful.
 
 #### Save the Seurat object
 
 ```{r saveRDS}
-saveRDS(experiment.integrated, file="scRNA_workshop-05.rds")
+saveRDS(experiment.integrated, file="scRNA_workshop-08.rds")
 ```
 
-#### Download the Rmd document
-```{r download_Rmd, eval=FALSE}
-download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-June-Single-Cell-RNA-Seq-Analysis/main/data_analysis/06-clustering_celltype.Rmd", "06-clustering_celltype.Rmd")
-```
 
 #### Session information
 ```{r sessioninfo}

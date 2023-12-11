@@ -195,7 +195,7 @@ saveRDS(experiment.aggregate, file="scRNA_workshop-01.rds")
 ```
 
 #### Download Rmd
-```{r download_Rmd, eval=FALSE}
+```{r download_Rmd, eval=TRUE}
 download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/02-filtering.Rmd", "02-filtering.Rmd")
 ```
 
