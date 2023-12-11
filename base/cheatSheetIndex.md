@@ -28,4 +28,4 @@
 
 * [rmarkdown-reference.pdf](https://www.rstudio.com/wp-content/uploads/2015/03/rmarkdown-reference.pdf)
 
-* [rmarkdown-2.0.pdf](https://github.com/rstudio/cheatsheets/raw/master/rmarkdown-2.0.pdf)
+* [rmarkdown-2.0.pdf](https://github.com/rstudio/cheatsheets/blob/main/rmarkdown-2.0.pdf)
