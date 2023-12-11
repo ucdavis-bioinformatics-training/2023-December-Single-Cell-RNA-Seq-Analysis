@@ -336,7 +336,7 @@ Lines beginning with "#SBATCH" will be passed as arguments to the sbatch command
 #SBATCH --mem=500 # Memory pool for all cores (see also --mem-per-cpu)
 #SBATCH --partition=production # cluster partition
 #SBATCH --account=workshop # cluster account to use for the job
-#SBATCH --reservation=workshop # cluster account reservation
+#SBATCH --reservation=scworkshop # cluster account reservation
 #SBATCH --array=1 # Task array indexing, see https://slurm.schedmd.com/job_array.html
 #SBATCH --output=template-%A-%a.out # File to which STDOUT will be written
 #SBATCH --error=template-%A-%a.err # File to which STDERR will be written

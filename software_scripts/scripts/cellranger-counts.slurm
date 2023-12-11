@@ -6,7 +6,7 @@
 #SBATCH --ntasks=4 # Number of cores
 #SBATCH --mem=16000 # Memory pool for all cores (see also --mem-per-cpu)
 #SBATCH --partition=production # Partition to submit to
-#SBATCH --reservation=rnaworkshop
+#SBATCH --reservation=scworkshop
 #SBATCH --account=workshop
 #SBATCH --output=slurmout/counts-cellrngr-%A-%a.out # File to which STDOUT will be written
 #SBATCH --error=slurmout/counts-cellrngr-%A-%a.err # File to which STDERR will be written
