@@ -6,7 +6,7 @@
 
 ### Introduction to RStudio
 
-* [rstudio-ide.pdf](https://github.com/rstudio/cheatsheets/blob/main/rstudio-ide.pdf)
+* [rstudio-ide.pdf](https://rstudio.github.io/cheatsheets/html/rstudio-ide.html)
 
 ### Introduction to R
 
@@ -18,11 +18,11 @@
 
 ### Data Import/Transformation and Visualization
 
-* [data-import.pdf](https://github.com/rstudio/cheatsheets/raw/master/data-import.pdf)
+* [data-import.pdf](https://github.com/rstudio/cheatsheets/blob/main/data-import.pdf)
 
-* [data-transformation.pdf](https://github.com/rstudio/cheatsheets/raw/master/data-transformation.pdf)
+* [data-transformation.pdf](https://github.com/rstudio/cheatsheets/blob/main/data-transformation.pdf)
 
-* [data-visualization-2.1.pdf](https://github.com/rstudio/cheatsheets/raw/master/data-visualization-2.1.pdf)
+* [data-visualization-2.1.pdf](https://github.com/rstudio/cheatsheets/blob/main/data-visualization-2.1.pdf)
 
 ### R Markdown
 
