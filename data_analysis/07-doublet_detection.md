@@ -1,7 +1,7 @@
 ---
 title: "Introduction to Single Cell RNA-Seq Part 7: Doublet detection"
 author: "UCD Bioinformatics Core"
-date: "2023-12-07"
+date: "2023-12-10"
 output:
     html_document:
       keep_md: TRUE
@@ -141,10 +141,10 @@ nExp.adj
 ## [1] 30
 ## 
 ## [[2]]
-## [1] 75
+## [1] 74
 ## 
 ## [[3]]
-## [1] 164
+## [1] 163
 ```
 
 ## Doublet detection
