@@ -111,6 +111,18 @@ write.csv(GenTable(GOdata, Fisher = resultFisher), file = "cluster10_GOdata.csv"
 write.csv(out, file = "cluster10_Normal-Colorectal.Cancer_topTable.csv")
 ```
 
+## A note on pseudobulk DE
+
+Pseudobulk differential expression uses count data summed across all cells in each sample (typically within each cell type or cluster).  Unlike cell-level DE, pseudobulk DE *requires biological replicates* so we won't perform it on this dataset.
+
+Once counts are summed, pseudobulk data are analyzed like bulk RNASeq data.
+
+Pseudobulk DE may result in better false discovery rate control than cell-level DE, as shown [here](https://www.nature.com/articles/s41467-021-25960-2).
+
+The Seurat function `AggregateExpression()` can be used to sum counts as described [here](https://satijalab.org/seurat/articles/de_vignette).
+
+A tutorial on using limma for bulk RNASeq is available [here](https://ucdavis-bioinformatics-training.github.io/2023-June-RNA-Seq-Analysis/data_analysis/DE_Analysis_mm_with_quizzes).
+
 ## Prepare for the next section
 
 #### Download Rmd document

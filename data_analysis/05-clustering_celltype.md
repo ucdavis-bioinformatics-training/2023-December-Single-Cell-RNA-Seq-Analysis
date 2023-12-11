@@ -1,14 +1,14 @@
 ---
-title: "Introduction to Single Cell RNA-Seq Part 5: Clustering and cell type assignment"
+title: "Introduction to Single Cell RNA-Seq Part 6: Clustering and cell type assignment"
 author: "UCD Bioinformatics Core"
-date: "2023-12-10"
+date: "2023-12-11"
 output:
     html_document:
       keep_md: TRUE
       toc: TRUE
 ---
 
-# Introduction to Single Cell RNA-Seq Part 5: Clustering and cell type assignment
+# Introduction to Single Cell RNA-Seq Part 6: Clustering and cell type assignment
 Clustering and cell type assignment are critical steps in many single cell (or single nucleus) experiments. The power of single cell experiments is to capture the heterogeneity within samples as well as between them. Clustering permits the user to organize cells into clusters that correspond to biologically and experimentally relevant populations.
 
 
@@ -27,13 +27,12 @@ experiment.aggregate <- readRDS("scRNA_workshop-04.rds")
 experiment.aggregate
 ```
 
-```
-## An object of class Seurat 
-## 11292 features across 6313 samples within 1 assay 
-## Active assay: RNA (11292 features, 7012 variable features)
-##  2 dimensional reductions calculated: pca, umap
-```
-
+<div class='r_output'> An object of class Seurat 
+ 11292 features across 6313 samples within 1 assay 
+ Active assay: RNA (11292 features, 7012 variable features)
+  3 layers present: counts, data, scale.data
+  2 dimensional reductions calculated: pca, umap
+</div>
 ## Construct network
 Seurat implements an graph-based clustering approach. Distances between the cells are calculated based on previously identified PCs.
 
@@ -53,45 +52,43 @@ experiment.aggregate <- FindClusters(experiment.aggregate,
                                      resolution = seq(0.1, 0.4, 0.1))
 ```
 
-```
-## Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
-## 
-## Number of nodes: 6313
-## Number of edges: 265916
-## 
-## Running Louvain algorithm...
-## Maximum modularity in 10 random starts: 0.9680
-## Number of communities: 10
-## Elapsed time: 0 seconds
-## Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
-## 
-## Number of nodes: 6313
-## Number of edges: 265916
-## 
-## Running Louvain algorithm...
-## Maximum modularity in 10 random starts: 0.9484
-## Number of communities: 11
-## Elapsed time: 0 seconds
-## Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
-## 
-## Number of nodes: 6313
-## Number of edges: 265916
-## 
-## Running Louvain algorithm...
-## Maximum modularity in 10 random starts: 0.9339
-## Number of communities: 13
-## Elapsed time: 0 seconds
-## Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
-## 
-## Number of nodes: 6313
-## Number of edges: 265916
-## 
-## Running Louvain algorithm...
-## Maximum modularity in 10 random starts: 0.9217
-## Number of communities: 15
-## Elapsed time: 0 seconds
-```
-
+<div class='r_output'> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+ 
+ Number of nodes: 6313
+ Number of edges: 265916
+ 
+ Running Louvain algorithm...
+ Maximum modularity in 10 random starts: 0.9680
+ Number of communities: 10
+ Elapsed time: 0 seconds
+ Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+ 
+ Number of nodes: 6313
+ Number of edges: 265916
+ 
+ Running Louvain algorithm...
+ Maximum modularity in 10 random starts: 0.9484
+ Number of communities: 11
+ Elapsed time: 0 seconds
+ Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+ 
+ Number of nodes: 6313
+ Number of edges: 265916
+ 
+ Running Louvain algorithm...
+ Maximum modularity in 10 random starts: 0.9339
+ Number of communities: 13
+ Elapsed time: 0 seconds
+ Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+ 
+ Number of nodes: 6313
+ Number of edges: 265916
+ 
+ Running Louvain algorithm...
+ Maximum modularity in 10 random starts: 0.9217
+ Number of communities: 15
+ Elapsed time: 0 seconds
+</div>
 Seurat adds the clustering information to the metadata table. Each FindClusters call generates a new column named with the assay, followed by "_snn_res.", and the resolution.
 
 ```r
@@ -167,11 +164,9 @@ sapply(cluster.resolutions, function(res){
 })
 ```
 
-```
-## RNA_snn_res.0.1 RNA_snn_res.0.2 RNA_snn_res.0.3 RNA_snn_res.0.4 
-##              10              11              13              15
-```
-
+<div class='r_output'> RNA_snn_res.0.1 RNA_snn_res.0.2 RNA_snn_res.0.3 RNA_snn_res.0.4 
+              10              11              13              15
+</div>
 ### Visualize clustering
 
 Dimensionality reduction plots can be used to visualize the clustering results. On these plots, we can see how each clustering resolution aligns with patterns in the data revealed by dimensionality reductions.
@@ -190,31 +185,23 @@ lapply(cluster.resolutions, function(res){
 })
 ```
 
-```
-## [[1]]
-```
-
+<div class='r_output'> [[1]]
+</div>
 ![](05-clustering_celltype_files/figure-html/UMAP-1.png)<!-- -->
 
-```
-## 
-## [[2]]
-```
-
+<div class='r_output'> 
+ [[2]]
+</div>
 ![](05-clustering_celltype_files/figure-html/UMAP-2.png)<!-- -->
 
-```
-## 
-## [[3]]
-```
-
+<div class='r_output'> 
+ [[3]]
+</div>
 ![](05-clustering_celltype_files/figure-html/UMAP-3.png)<!-- -->
 
-```
-## 
-## [[4]]
-```
-
+<div class='r_output'> 
+ [[4]]
+</div>
 ![](05-clustering_celltype_files/figure-html/UMAP-4.png)<!-- -->
 
 ### Investigate the relationship between cluster identity and sample identity
@@ -231,31 +218,23 @@ lapply(cluster.resolutions, function(res){
 })
 ```
 
-```
-## [[1]]
-```
-
+<div class='r_output'> [[1]]
+</div>
 ![](05-clustering_celltype_files/figure-html/membership-1.png)<!-- -->
 
-```
-## 
-## [[2]]
-```
-
+<div class='r_output'> 
+ [[2]]
+</div>
 ![](05-clustering_celltype_files/figure-html/membership-2.png)<!-- -->
 
-```
-## 
-## [[3]]
-```
-
+<div class='r_output'> 
+ [[3]]
+</div>
 ![](05-clustering_celltype_files/figure-html/membership-3.png)<!-- -->
 
-```
-## 
-## [[4]]
-```
-
+<div class='r_output'> 
+ [[4]]
+</div>
 ![](05-clustering_celltype_files/figure-html/membership-4.png)<!-- -->
 
 ### Investigate the relationship between cluster identity and metadata values
@@ -341,12 +320,10 @@ experiment.aggregate$res.0.4_merged <- Idents(experiment.aggregate)
 table(experiment.aggregate$res.0.4_merged)
 ```
 
-```
-## 
-##   10   13    0    1    2    3    4    5    6    7    8    9   14 
-##  107   58 1391 1009  916  657  655  613  413  189  180  102   23
-```
-
+<div class='r_output'> 
+   10   13    0    1    2    3    4    5    6    7    8    9   14 
+  107   58 1391 1009  916  657  655  613  413  189  180  102   23
+</div>
 ```r
 experiment.aggregate@meta.data %>%
   ggplot(aes(x = res.0.4_merged, fill = group)) +
@@ -383,20 +360,16 @@ Merging the clusters changed the order in which they appear on a plot. In order 
 levels(experiment.aggregate$res.0.4_merged)
 ```
 
-```
-##  [1] "10" "13" "0"  "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "14"
-```
-
+<div class='r_output'>  [1] "10" "13" "0"  "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "14"
+</div>
 ```r
 # move one cluster to the first position
 experiment.aggregate$res.0.4_merged <- relevel(experiment.aggregate$res.0.4_merged, "0")
 levels(experiment.aggregate$res.0.4_merged)
 ```
 
-```
-##  [1] "0"  "10" "13" "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "14"
-```
-
+<div class='r_output'>  [1] "0"  "10" "13" "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "14"
+</div>
 ```r
 # the color assigned to some clusters will change
 VlnPlot(experiment.aggregate,
@@ -415,10 +388,8 @@ experiment.aggregate$res.0.4_merged <- factor(experiment.aggregate$res.0.4_merge
 levels(experiment.aggregate$res.0.4_merged)
 ```
 
-```
-##  [1] "0"  "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "10" "13" "14"
-```
-
+<div class='r_output'>  [1] "0"  "1"  "2"  "3"  "4"  "5"  "6"  "7"  "8"  "9"  "10" "13" "14"
+</div>
 ```r
 VlnPlot(experiment.aggregate,
         group.by = "res.0.4_merged",
@@ -439,18 +410,16 @@ experiment.aggregate <- FindSubCluster(experiment.aggregate,
                                        subcluster.name = "subcluster")
 ```
 
-```
-## Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
-## 
-## Number of nodes: 613
-## Number of edges: 23846
-## 
-## Running Louvain algorithm...
-## Maximum modularity in 10 random starts: 0.7230
-## Number of communities: 4
-## Elapsed time: 0 seconds
-```
-
+<div class='r_output'> Modularity Optimizer version 1.3.0 by Ludo Waltman and Nees Jan van Eck
+ 
+ Number of nodes: 613
+ Number of edges: 23846
+ 
+ Running Louvain algorithm...
+ Maximum modularity in 10 random starts: 0.7230
+ Number of communities: 4
+ Elapsed time: 0 seconds
+</div>
 ```r
 experiment.aggregate$subcluster <- factor(experiment.aggregate$subcluster,
                                           levels = c(as.character(0:4),
@@ -469,11 +438,9 @@ DimPlot(experiment.aggregate,
 sort(unique(experiment.aggregate$subcluster))
 ```
 
-```
-##  [1] 0   1   2   3   4   5_0 5_1 5_2 5_3 6   7   8   9   10  13  14 
-## Levels: 0 1 2 3 4 5_0 5_1 5_2 5_3 6 7 8 9 10 13 14
-```
-
+<div class='r_output'>  [1] 0   1   2   3   4   5_0 5_1 5_2 5_3 6   7   8   9   10  13  14 
+ Levels: 0 1 2 3 4 5_0 5_1 5_2 5_3 6 7 8 9 10 13 14
+</div>
 ## Subset experiment by cluster identity
 After exploring and refining the cluster resolution, we may have identified some clusters that are composed of cells we aren't interested in. For example, if we have identified a cluster likely composed of contaminants, this cluster can be removed from the analysis. Alternatively, if a group of clusters have been identified as particularly of interest, these can be isolated and re-analyzed.
 
@@ -522,10 +489,8 @@ markers <- FindMarkers(experiment.aggregate,
 length(which(markers$p_val_adj < 0.05)) # how many are significant?
 ```
 
-```
-## [1] 1744
-```
-
+<div class='r_output'> [1] 3428
+</div>
 ```r
 head(markers) %>%
   kable() %>%
@@ -545,9 +510,25 @@ head(markers) %>%
  </thead>
 <tbody>
   <tr>
+   <td style="text-align:left;"> CEMIP </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 4.492942 </td>
+   <td style="text-align:right;"> 0.621 </td>
+   <td style="text-align:right;"> 0.056 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> GRM8 </td>
+   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 3.071393 </td>
+   <td style="text-align:right;"> 0.636 </td>
+   <td style="text-align:right;"> 0.101 </td>
+   <td style="text-align:right;"> 0 </td>
+  </tr>
+  <tr>
    <td style="text-align:left;"> AGBL4 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 2.173808 </td>
+   <td style="text-align:right;"> 3.094973 </td>
    <td style="text-align:right;"> 0.611 </td>
    <td style="text-align:right;"> 0.103 </td>
    <td style="text-align:right;"> 0 </td>
@@ -555,31 +536,15 @@ head(markers) %>%
   <tr>
    <td style="text-align:left;"> EDAR </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1.739874 </td>
+   <td style="text-align:right;"> 4.399116 </td>
    <td style="text-align:right;"> 0.383 </td>
    <td style="text-align:right;"> 0.023 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> GRM8 </td>
-   <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 2.186329 </td>
-   <td style="text-align:right;"> 0.636 </td>
-   <td style="text-align:right;"> 0.101 </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> CEMIP </td>
-   <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 3.035450 </td>
-   <td style="text-align:right;"> 0.621 </td>
-   <td style="text-align:right;"> 0.056 </td>
-   <td style="text-align:right;"> 0 </td>
-  </tr>
-  <tr>
    <td style="text-align:left;"> CASC19 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1.923663 </td>
+   <td style="text-align:right;"> 3.217203 </td>
    <td style="text-align:right;"> 0.532 </td>
    <td style="text-align:right;"> 0.081 </td>
    <td style="text-align:right;"> 0 </td>
@@ -587,7 +552,7 @@ head(markers) %>%
   <tr>
    <td style="text-align:left;"> NKD1 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 2.310743 </td>
+   <td style="text-align:right;"> 3.053094 </td>
    <td style="text-align:right;"> 0.529 </td>
    <td style="text-align:right;"> 0.085 </td>
    <td style="text-align:right;"> 0 </td>
@@ -610,17 +575,13 @@ lapply(view.markers, function(marker){
 })
 ```
 
-```
-## [[1]]
-```
-
+<div class='r_output'> [[1]]
+</div>
 ![](05-clustering_celltype_files/figure-html/view.markers-1.png)<!-- -->
 
-```
-## 
-## [[2]]
-```
-
+<div class='r_output'> 
+ [[2]]
+</div>
 ![](05-clustering_celltype_files/figure-html/view.markers-2.png)<!-- -->
 
 ```r
@@ -677,11 +638,9 @@ tapply(markers$p_val_adj, markers$cluster, function(x){
 })
 ```
 
-```
-##    0    1    2    3    4  5_0  5_1  5_2  5_3    6    7    8    9   10   13   14 
-##  552  700  436  775 1187  250  749  223  333 1117  329  532  255  327  257  296
-```
-
+<div class='r_output'>    0    1    2    3    4  5_0  5_1  5_2  5_3    6    7    8    9   10   13   14 
+  777 1276  493 1492 1464  262  765  224  337 1600  330  567  258  329  257  299
+</div>
 ```r
 head(markers) %>%
   kable() %>%
@@ -705,7 +664,7 @@ head(markers) %>%
   <tr>
    <td style="text-align:left;"> RBFOX1 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1.801917 </td>
+   <td style="text-align:right;"> 2.025116 </td>
    <td style="text-align:right;"> 0.855 </td>
    <td style="text-align:right;"> 0.409 </td>
    <td style="text-align:right;"> 0 </td>
@@ -715,7 +674,7 @@ head(markers) %>%
   <tr>
    <td style="text-align:left;"> NXPE1 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1.603500 </td>
+   <td style="text-align:right;"> 1.711350 </td>
    <td style="text-align:right;"> 0.958 </td>
    <td style="text-align:right;"> 0.597 </td>
    <td style="text-align:right;"> 0 </td>
@@ -725,7 +684,7 @@ head(markers) %>%
   <tr>
    <td style="text-align:left;"> ADAMTSL1 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1.460447 </td>
+   <td style="text-align:right;"> 1.578448 </td>
    <td style="text-align:right;"> 0.911 </td>
    <td style="text-align:right;"> 0.512 </td>
    <td style="text-align:right;"> 0 </td>
@@ -735,7 +694,7 @@ head(markers) %>%
   <tr>
    <td style="text-align:left;"> XIST </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1.337624 </td>
+   <td style="text-align:right;"> 1.523203 </td>
    <td style="text-align:right;"> 0.850 </td>
    <td style="text-align:right;"> 0.359 </td>
    <td style="text-align:right;"> 0 </td>
@@ -745,7 +704,7 @@ head(markers) %>%
   <tr>
    <td style="text-align:left;"> HNF1A-AS1 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1.220046 </td>
+   <td style="text-align:right;"> 1.379945 </td>
    <td style="text-align:right;"> 0.879 </td>
    <td style="text-align:right;"> 0.563 </td>
    <td style="text-align:right;"> 0 </td>
@@ -755,7 +714,7 @@ head(markers) %>%
   <tr>
    <td style="text-align:left;"> SATB2 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> 1.114086 </td>
+   <td style="text-align:right;"> 1.181755 </td>
    <td style="text-align:right;"> 0.937 </td>
    <td style="text-align:right;"> 0.665 </td>
    <td style="text-align:right;"> 0 </td>
@@ -776,115 +735,83 @@ lapply(view.markers, function(marker){
 })
 ```
 
-```
-## $`0`
-```
-
+<div class='r_output'> $`0`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-1.png)<!-- -->
 
-```
-## 
-## $`1`
-```
-
+<div class='r_output'> 
+ $`1`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-2.png)<!-- -->
 
-```
-## 
-## $`2`
-```
-
+<div class='r_output'> 
+ $`2`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-3.png)<!-- -->
 
-```
-## 
-## $`3`
-```
-
+<div class='r_output'> 
+ $`3`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-4.png)<!-- -->
 
-```
-## 
-## $`4`
-```
-
+<div class='r_output'> 
+ $`4`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-5.png)<!-- -->
 
-```
-## 
-## $`5_0`
-```
-
+<div class='r_output'> 
+ $`5_0`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-6.png)<!-- -->
 
-```
-## 
-## $`5_1`
-```
-
+<div class='r_output'> 
+ $`5_1`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-7.png)<!-- -->
 
-```
-## 
-## $`5_2`
-```
-
+<div class='r_output'> 
+ $`5_2`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-8.png)<!-- -->
 
-```
-## 
-## $`5_3`
-```
-
+<div class='r_output'> 
+ $`5_3`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-9.png)<!-- -->
 
-```
-## 
-## $`6`
-```
-
+<div class='r_output'> 
+ $`6`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-10.png)<!-- -->
 
-```
-## 
-## $`7`
-```
-
+<div class='r_output'> 
+ $`7`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-11.png)<!-- -->
 
-```
-## 
-## $`8`
-```
-
+<div class='r_output'> 
+ $`8`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-12.png)<!-- -->
 
-```
-## 
-## $`9`
-```
-
+<div class='r_output'> 
+ $`9`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-13.png)<!-- -->
 
-```
-## 
-## $`10`
-```
-
+<div class='r_output'> 
+ $`10`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-14.png)<!-- -->
 
-```
-## 
-## $`13`
-```
-
+<div class='r_output'> 
+ $`13`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-15.png)<!-- -->
 
-```
-## 
-## $`14`
-```
-
+<div class='r_output'> 
+ $`14`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-16.png)<!-- -->
 
 ```r
@@ -895,115 +822,83 @@ lapply(view.markers, function(marker){
 })
 ```
 
-```
-## $`0`
-```
-
+<div class='r_output'> $`0`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-17.png)<!-- -->
 
-```
-## 
-## $`1`
-```
-
+<div class='r_output'> 
+ $`1`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-18.png)<!-- -->
 
-```
-## 
-## $`2`
-```
-
+<div class='r_output'> 
+ $`2`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-19.png)<!-- -->
 
-```
-## 
-## $`3`
-```
-
+<div class='r_output'> 
+ $`3`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-20.png)<!-- -->
 
-```
-## 
-## $`4`
-```
-
+<div class='r_output'> 
+ $`4`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-21.png)<!-- -->
 
-```
-## 
-## $`5_0`
-```
-
+<div class='r_output'> 
+ $`5_0`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-22.png)<!-- -->
 
-```
-## 
-## $`5_1`
-```
-
+<div class='r_output'> 
+ $`5_1`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-23.png)<!-- -->
 
-```
-## 
-## $`5_2`
-```
-
+<div class='r_output'> 
+ $`5_2`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-24.png)<!-- -->
 
-```
-## 
-## $`5_3`
-```
-
+<div class='r_output'> 
+ $`5_3`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-25.png)<!-- -->
 
-```
-## 
-## $`6`
-```
-
+<div class='r_output'> 
+ $`6`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-26.png)<!-- -->
 
-```
-## 
-## $`7`
-```
-
+<div class='r_output'> 
+ $`7`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-27.png)<!-- -->
 
-```
-## 
-## $`8`
-```
-
+<div class='r_output'> 
+ $`8`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-28.png)<!-- -->
 
-```
-## 
-## $`9`
-```
-
+<div class='r_output'> 
+ $`9`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-29.png)<!-- -->
 
-```
-## 
-## $`10`
-```
-
+<div class='r_output'> 
+ $`10`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-30.png)<!-- -->
 
-```
-## 
-## $`13`
-```
-
+<div class='r_output'> 
+ $`13`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-31.png)<!-- -->
 
-```
-## 
-## $`14`
-```
-
+<div class='r_output'> 
+ $`14`
+</div>
 ![](05-clustering_celltype_files/figure-html/FindAllMarkers-32.png)<!-- -->
 
 ```r
@@ -1048,11 +943,9 @@ getGeneClusterMeans <- function(feature, idents){
 getGeneClusterMeans("SMOC2", c("1"))
 ```
 
-```
-##     mean.in.idents mean.out.of.idents 
-##          0.9897597          0.1035296
-```
-
+<div class='r_output'>     mean.in.idents mean.out.of.idents 
+          0.9897597          0.1035296
+</div>
 ```r
 # add means to marker table (example using subset)
 markers.small <- markers[view.markers,]
@@ -1082,7 +975,7 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:left;"> 0 </td>
    <td style="text-align:right;"> 2.4572798 </td>
    <td style="text-align:right;"> 0.9039857 </td>
-   <td style="text-align:right;"> 1.8019166 </td>
+   <td style="text-align:right;"> 2.0251164 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1090,7 +983,7 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:left;"> 1 </td>
    <td style="text-align:right;"> 1.6549190 </td>
    <td style="text-align:right;"> 0.1118442 </td>
-   <td style="text-align:right;"> 3.0354498 </td>
+   <td style="text-align:right;"> 4.4929424 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1098,7 +991,7 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:left;"> 2 </td>
    <td style="text-align:right;"> 2.9307725 </td>
    <td style="text-align:right;"> 0.1803269 </td>
-   <td style="text-align:right;"> 3.9394788 </td>
+   <td style="text-align:right;"> 5.0215860 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1106,7 +999,7 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:left;"> 0 </td>
    <td style="text-align:right;"> 1.5462679 </td>
    <td style="text-align:right;"> 0.9425927 </td>
-   <td style="text-align:right;"> 0.2633176 </td>
+   <td style="text-align:right;"> 0.3043462 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1114,7 +1007,7 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:left;"> 4 </td>
    <td style="text-align:right;"> 1.9860483 </td>
    <td style="text-align:right;"> 0.0205298 </td>
-   <td style="text-align:right;"> 3.4060180 </td>
+   <td style="text-align:right;"> 7.0988436 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1122,7 +1015,7 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:left;"> 1 </td>
    <td style="text-align:right;"> 0.7379974 </td>
    <td style="text-align:right;"> 0.2781939 </td>
-   <td style="text-align:right;"> 0.6933742 </td>
+   <td style="text-align:right;"> 1.1216293 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1130,15 +1023,15 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:left;"> 5_1 </td>
    <td style="text-align:right;"> 0.4735995 </td>
    <td style="text-align:right;"> 0.0159515 </td>
-   <td style="text-align:right;"> 1.4183212 </td>
+   <td style="text-align:right;"> 5.3313107 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> MUC4 </td>
-   <td style="text-align:left;"> 2 </td>
-   <td style="text-align:right;"> 1.7035789 </td>
-   <td style="text-align:right;"> 0.8761755 </td>
-   <td style="text-align:right;"> 1.0070648 </td>
+   <td style="text-align:left;"> 0 </td>
+   <td style="text-align:right;"> 1.3083395 </td>
+   <td style="text-align:right;"> 0.9080246 </td>
+   <td style="text-align:right;"> 0.2813731 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1146,15 +1039,15 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:left;"> 5_1 </td>
    <td style="text-align:right;"> 1.0662439 </td>
    <td style="text-align:right;"> 0.1748105 </td>
-   <td style="text-align:right;"> 1.9017779 </td>
+   <td style="text-align:right;"> 3.0403457 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> GDA </td>
+   <td style="text-align:left;"> HDAC9 </td>
    <td style="text-align:left;"> 5_1 </td>
-   <td style="text-align:right;"> 1.4427951 </td>
-   <td style="text-align:right;"> 0.6509512 </td>
-   <td style="text-align:right;"> 0.8816666 </td>
+   <td style="text-align:right;"> 0.9376478 </td>
+   <td style="text-align:right;"> 0.2505221 </td>
+   <td style="text-align:right;"> 1.9565171 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1162,15 +1055,15 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:left;"> 7 </td>
    <td style="text-align:right;"> 2.7875189 </td>
    <td style="text-align:right;"> 0.0426053 </td>
-   <td style="text-align:right;"> 4.4588420 </td>
+   <td style="text-align:right;"> 7.1782150 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> CA7 </td>
+   <td style="text-align:left;"> NOTCH2 </td>
    <td style="text-align:left;"> 8 </td>
-   <td style="text-align:right;"> 2.7054238 </td>
-   <td style="text-align:right;"> 0.0405927 </td>
-   <td style="text-align:right;"> 4.5800381 </td>
+   <td style="text-align:right;"> 2.7919023 </td>
+   <td style="text-align:right;"> 0.1491101 </td>
+   <td style="text-align:right;"> 5.5240290 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1178,7 +1071,7 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:left;"> 9 </td>
    <td style="text-align:right;"> 2.4875120 </td>
    <td style="text-align:right;"> 0.0532663 </td>
-   <td style="text-align:right;"> 4.1066037 </td>
+   <td style="text-align:right;"> 6.7278361 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1186,7 +1079,7 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:left;"> 10 </td>
    <td style="text-align:right;"> 1.1234271 </td>
    <td style="text-align:right;"> 0.0086313 </td>
-   <td style="text-align:right;"> 2.7698349 </td>
+   <td style="text-align:right;"> 7.7152901 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1194,7 +1087,7 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:left;"> 13 </td>
    <td style="text-align:right;"> 2.0897079 </td>
    <td style="text-align:right;"> 0.0079379 </td>
-   <td style="text-align:right;"> 4.4642037 </td>
+   <td style="text-align:right;"> 9.7517535 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
   <tr>
@@ -1202,7 +1095,7 @@ markers.small[,c("cluster", "mean.in.cluster", "mean.out.of.cluster", "avg_log2F
    <td style="text-align:left;"> 14 </td>
    <td style="text-align:right;"> 0.6126504 </td>
    <td style="text-align:right;"> 0.0439210 </td>
-   <td style="text-align:right;"> 1.3887280 </td>
+   <td style="text-align:right;"> 4.0030332 </td>
    <td style="text-align:right;"> 0 </td>
   </tr>
 </tbody>
@@ -1327,7 +1220,7 @@ gs.list$gs_negative$`Tuft cells` <- NULL
 ScType scores every cell, summarizing the transformed and weighted expression of markers for each cell type. This generates a matrix with the dimensions cell types x cells.
 
 ```r
-es.max <- sctype_score(GetAssayData(experiment.aggregate, "scale"),
+es.max <- sctype_score(GetAssayData(experiment.aggregate, layer = "scale"),
                        scaled = TRUE,
                        gs = gs.list$gs_positive,
                        gs2 = gs.list$gs_negative)
@@ -1335,17 +1228,15 @@ es.max <- sctype_score(GetAssayData(experiment.aggregate, "scale"),
 es.max[,1]
 ```
 
-```
-##         Smooth muscle cells              Lymphoid cells 
-##                  -0.3242388                  -0.1071300 
-## Intestinal epithelial cells                    ENS glia 
-##                  -0.4535236                  -0.1363118 
-##  Vascular endothelial cells               Stromal cells 
-##                  -0.1040835                  -0.1545696 
-## Lymphatic endothelial cells                  Tuft cells 
-##                   2.1436243                   0.6228897
-```
-
+<div class='r_output'>         Smooth muscle cells              Lymphoid cells 
+                  -0.3242388                  -0.1071300 
+ Intestinal epithelial cells                    ENS glia 
+                  -0.4535236                  -0.1363118 
+  Vascular endothelial cells               Stromal cells 
+                  -0.1040835                  -0.1545696 
+ Lymphatic endothelial cells                  Tuft cells 
+                   2.1436243                   0.6228897
+</div>
 ### Score clusters
 The "ScType score" of each cluster is calculated by summing the cell-level scores within each cluster. The cell type with the largest (positive) score is the most highly enriched cell type for that cluster.
 
@@ -1654,73 +1545,77 @@ download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training
 sessionInfo()
 ```
 
-```
-## R version 4.2.2 (2022-10-31)
-## Platform: x86_64-apple-darwin17.0 (64-bit)
-## Running under: macOS Big Sur ... 10.16
-## 
-## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRblas.0.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRlapack.dylib
-## 
-## locale:
-## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
-## 
-## attached base packages:
-## [1] grid      stats     graphics  grDevices utils     datasets  methods  
-## [8] base     
-## 
-## other attached packages:
-## [1] ComplexHeatmap_2.14.0 HGNChelper_0.8.1      ggplot2_3.4.0        
-## [4] dplyr_1.0.10          tidyr_1.2.1           kableExtra_1.3.4     
-## [7] SeuratObject_4.1.3    Seurat_4.3.0         
-## 
-## loaded via a namespace (and not attached):
-##   [1] circlize_0.4.15        systemfonts_1.0.4      plyr_1.8.8            
-##   [4] igraph_1.3.5           lazyeval_0.2.2         sp_1.5-1              
-##   [7] splines_4.2.2          listenv_0.8.0          scattermore_0.8       
-##  [10] digest_0.6.30          foreach_1.5.2          htmltools_0.5.3       
-##  [13] viridis_0.6.2          fansi_1.0.3            magrittr_2.0.3        
-##  [16] tensor_1.5             cluster_2.1.4          doParallel_1.0.17     
-##  [19] ROCR_1.0-11            openxlsx_4.2.5.1       limma_3.54.0          
-##  [22] globals_0.16.2         matrixStats_0.63.0     svglite_2.1.0         
-##  [25] spatstat.sparse_3.0-0  colorspace_2.0-3       rvest_1.0.3           
-##  [28] ggrepel_0.9.2          xfun_0.35              crayon_1.5.2          
-##  [31] jsonlite_1.8.4         progressr_0.11.0       spatstat.data_3.0-0   
-##  [34] ape_5.6-2              survival_3.4-0         zoo_1.8-11            
-##  [37] iterators_1.0.14       glue_1.6.2             polyclip_1.10-4       
-##  [40] gtable_0.3.1           webshot_0.5.4          leiden_0.4.3          
-##  [43] GetoptLong_1.0.5       shape_1.4.6            future.apply_1.10.0   
-##  [46] BiocGenerics_0.44.0    abind_1.4-5            scales_1.2.1          
-##  [49] DBI_1.1.3              spatstat.random_3.0-1  miniUI_0.1.1.1        
-##  [52] Rcpp_1.0.9             viridisLite_0.4.1      xtable_1.8-4          
-##  [55] clue_0.3-63            reticulate_1.28        stats4_4.2.2          
-##  [58] htmlwidgets_1.5.4      httr_1.4.4             RColorBrewer_1.1-3    
-##  [61] ellipsis_0.3.2         ica_1.0-3              farver_2.1.1          
-##  [64] pkgconfig_2.0.3        sass_0.4.4             uwot_0.1.14           
-##  [67] deldir_1.0-6           utf8_1.2.2             labeling_0.4.2        
-##  [70] tidyselect_1.2.0       rlang_1.0.6            reshape2_1.4.4        
-##  [73] later_1.3.0            munsell_0.5.0          tools_4.2.2           
-##  [76] cachem_1.0.6           cli_3.4.1              generics_0.1.3        
-##  [79] ggridges_0.5.4         evaluate_0.18          stringr_1.4.1         
-##  [82] fastmap_1.1.0          yaml_2.3.6             goftest_1.2-3         
-##  [85] knitr_1.41             fitdistrplus_1.1-8     zip_2.2.2             
-##  [88] purrr_0.3.5            RANN_2.6.1             pbapply_1.6-0         
-##  [91] future_1.29.0          nlme_3.1-160           mime_0.12             
-##  [94] ggrastr_1.0.1          xml2_1.3.3             compiler_4.2.2        
-##  [97] rstudioapi_0.14        beeswarm_0.4.0         plotly_4.10.1         
-## [100] png_0.1-8              spatstat.utils_3.0-1   tibble_3.1.8          
-## [103] bslib_0.4.1            stringi_1.7.8          highr_0.9             
-## [106] lattice_0.20-45        Matrix_1.5-3           vctrs_0.5.1           
-## [109] pillar_1.8.1           lifecycle_1.0.3        spatstat.geom_3.0-3   
-## [112] lmtest_0.9-40          jquerylib_0.1.4        GlobalOptions_0.1.2   
-## [115] RcppAnnoy_0.0.20       data.table_1.14.6      cowplot_1.1.1         
-## [118] irlba_2.3.5.1          httpuv_1.6.6           patchwork_1.1.2       
-## [121] R6_2.5.1               promises_1.2.0.1       KernSmooth_2.23-20    
-## [124] gridExtra_2.3          vipor_0.4.5            IRanges_2.32.0        
-## [127] parallelly_1.32.1      codetools_0.2-18       MASS_7.3-58.1         
-## [130] assertthat_0.2.1       rjson_0.2.21           withr_2.5.0           
-## [133] sctransform_0.3.5      S4Vectors_0.36.0       parallel_4.2.2        
-## [136] rmarkdown_2.18         Cairo_1.6-0            Rtsne_0.16            
-## [139] spatstat.explore_3.0-5 shiny_1.7.3            ggbeeswarm_0.6.0
-```
+<div class='r_output'> R version 4.3.2 (2023-10-31 ucrt)
+ Platform: x86_64-w64-mingw32/x64 (64-bit)
+ Running under: Windows 10 x64 (build 19045)
+ 
+ Matrix products: default
+ 
+ 
+ locale:
+ [1] LC_COLLATE=English_United States.utf8 
+ [2] LC_CTYPE=English_United States.utf8   
+ [3] LC_MONETARY=English_United States.utf8
+ [4] LC_NUMERIC=C                          
+ [5] LC_TIME=English_United States.utf8    
+ 
+ time zone: America/Los_Angeles
+ tzcode source: internal
+ 
+ attached base packages:
+ [1] grid      stats     graphics  grDevices utils     datasets  methods  
+ [8] base     
+ 
+ other attached packages:
+ [1] ComplexHeatmap_2.16.0 HGNChelper_0.8.1      ggplot2_3.4.4        
+ [4] dplyr_1.1.4           tidyr_1.3.0           kableExtra_1.3.4     
+ [7] Seurat_5.0.1          SeuratObject_5.0.1    sp_2.1-2             
+ 
+ loaded via a namespace (and not attached):
+   [1] RColorBrewer_1.1-3     shape_1.4.6            rstudioapi_0.15.0     
+   [4] jsonlite_1.8.8         magrittr_2.0.3         spatstat.utils_3.0-4  
+   [7] farver_2.1.1           rmarkdown_2.25         GlobalOptions_0.1.2   
+  [10] vctrs_0.6.5            ROCR_1.0-11            spatstat.explore_3.2-5
+  [13] webshot_0.5.5          htmltools_0.5.7        sass_0.4.8            
+  [16] sctransform_0.4.1      parallelly_1.36.0      KernSmooth_2.23-22    
+  [19] bslib_0.6.1            htmlwidgets_1.6.4      ica_1.0-3             
+  [22] plyr_1.8.9             plotly_4.10.3          zoo_1.8-12            
+  [25] cachem_1.0.8           igraph_1.5.1           iterators_1.0.14      
+  [28] mime_0.12              lifecycle_1.0.4        pkgconfig_2.0.3       
+  [31] Matrix_1.6-4           R6_2.5.1               fastmap_1.1.1         
+  [34] clue_0.3-65            fitdistrplus_1.1-11    future_1.33.0         
+  [37] shiny_1.8.0            digest_0.6.33          colorspace_2.1-0      
+  [40] S4Vectors_0.38.2       patchwork_1.1.3        tensor_1.5            
+  [43] RSpectra_0.16-1        irlba_2.3.5.1          labeling_0.4.3        
+  [46] progressr_0.14.0       fansi_1.0.6            spatstat.sparse_3.0-3 
+  [49] httr_1.4.7             polyclip_1.10-6        abind_1.4-5           
+  [52] compiler_4.3.2         doParallel_1.0.17      withr_2.5.2           
+  [55] viridis_0.6.4          fastDummies_1.7.3      highr_0.10            
+  [58] MASS_7.3-60            rjson_0.2.21           tools_4.3.2           
+  [61] lmtest_0.9-40          ape_5.7-1              zip_2.3.0             
+  [64] httpuv_1.6.13          future.apply_1.11.0    goftest_1.2-3         
+  [67] glue_1.6.2             nlme_3.1-164           promises_1.2.1        
+  [70] Rtsne_0.17             cluster_2.1.6          reshape2_1.4.4        
+  [73] generics_0.1.3         gtable_0.3.4           spatstat.data_3.0-3   
+  [76] data.table_1.14.10     xml2_1.3.6             utf8_1.2.4            
+  [79] BiocGenerics_0.46.0    spatstat.geom_3.2-7    RcppAnnoy_0.0.21      
+  [82] foreach_1.5.2          ggrepel_0.9.4          RANN_2.6.1            
+  [85] pillar_1.9.0           stringr_1.5.1          limma_3.56.2          
+  [88] spam_2.10-0            RcppHNSW_0.5.0         later_1.3.2           
+  [91] circlize_0.4.15        splines_4.3.2          lattice_0.22-5        
+  [94] survival_3.5-7         deldir_2.0-2           tidyselect_1.2.0      
+  [97] miniUI_0.1.1.1         pbapply_1.7-2          knitr_1.45            
+ [100] gridExtra_2.3          IRanges_2.34.1         svglite_2.1.3         
+ [103] scattermore_1.2        stats4_4.3.2           xfun_0.41             
+ [106] matrixStats_1.1.0      stringi_1.8.2          lazyeval_0.2.2        
+ [109] yaml_2.3.7             evaluate_0.23          codetools_0.2-19      
+ [112] tibble_3.2.1           cli_3.6.1              uwot_0.1.16           
+ [115] xtable_1.8-4           reticulate_1.34.0      systemfonts_1.0.5     
+ [118] munsell_0.5.0          jquerylib_0.1.4        Rcpp_1.0.11           
+ [121] globals_0.16.2         spatstat.random_3.2-2  png_0.1-8             
+ [124] parallel_4.3.2         ellipsis_0.3.2         dotCall64_1.1-1       
+ [127] listenv_0.9.0          viridisLite_0.4.2      scales_1.3.0          
+ [130] ggridges_0.5.4         openxlsx_4.2.5.2       crayon_1.5.2          
+ [133] leiden_0.4.3.1         purrr_1.0.2            GetoptLong_1.0.5      
+ [136] rlang_1.1.2            cowplot_1.1.1          rvest_1.0.3
+</div>

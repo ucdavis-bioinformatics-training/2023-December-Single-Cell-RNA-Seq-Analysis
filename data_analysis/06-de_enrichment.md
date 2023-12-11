@@ -1,7 +1,7 @@
 ---
 title: "Introduction to Single Cell RNA-Seq Part 6: Enrichment and model-based differential expression"
 author: "Bioinformatics Core"
-date: "2023-12-10"
+date: "2023-12-11"
 output:
     html_document:
       keep_md: TRUE
@@ -66,92 +66,84 @@ names(geneList) <- all.genes
  </thead>
 <tbody>
   <tr>
-   <td style="text-align:left;"> GO:0034968 </td>
-   <td style="text-align:left;"> histone lysine methylation </td>
-   <td style="text-align:right;"> 98 </td>
-   <td style="text-align:right;"> 9 </td>
-   <td style="text-align:right;"> 1.73 </td>
-   <td style="text-align:left;"> 5.6e-05 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> GO:0006325 </td>
-   <td style="text-align:left;"> chromatin organization </td>
-   <td style="text-align:right;"> 439 </td>
-   <td style="text-align:right;"> 23 </td>
-   <td style="text-align:right;"> 7.76 </td>
-   <td style="text-align:left;"> 0.00012 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> GO:0030036 </td>
-   <td style="text-align:left;"> actin cytoskeleton organization </td>
-   <td style="text-align:right;"> 474 </td>
-   <td style="text-align:right;"> 20 </td>
-   <td style="text-align:right;"> 8.38 </td>
-   <td style="text-align:left;"> 0.00026 </td>
-  </tr>
-  <tr>
    <td style="text-align:left;"> GO:0010613 </td>
    <td style="text-align:left;"> positive regulation of cardiac muscle hypertrophy </td>
    <td style="text-align:right;"> 19 </td>
    <td style="text-align:right;"> 4 </td>
    <td style="text-align:right;"> 0.34 </td>
-   <td style="text-align:left;"> 0.00030 </td>
+   <td style="text-align:left;"> 0.00031 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> GO:0006325 </td>
+   <td style="text-align:left;"> chromatin organization </td>
+   <td style="text-align:right;"> 465 </td>
+   <td style="text-align:right;"> 24 </td>
+   <td style="text-align:right;"> 8.31 </td>
+   <td style="text-align:left;"> 0.00047 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> GO:0030036 </td>
+   <td style="text-align:left;"> actin cytoskeleton organization </td>
+   <td style="text-align:right;"> 462 </td>
+   <td style="text-align:right;"> 19 </td>
+   <td style="text-align:right;"> 8.26 </td>
+   <td style="text-align:left;"> 0.00057 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> GO:0034968 </td>
+   <td style="text-align:left;"> histone lysine methylation </td>
+   <td style="text-align:right;"> 81 </td>
+   <td style="text-align:right;"> 7 </td>
+   <td style="text-align:right;"> 1.45 </td>
+   <td style="text-align:left;"> 0.00059 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> GO:2001014 </td>
    <td style="text-align:left;"> regulation of skeletal muscle cell differentiation </td>
    <td style="text-align:right;"> 11 </td>
    <td style="text-align:right;"> 3 </td>
-   <td style="text-align:right;"> 0.19 </td>
-   <td style="text-align:left;"> 0.00081 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> GO:1901888 </td>
-   <td style="text-align:left;"> regulation of cell junction assembly </td>
-   <td style="text-align:right;"> 118 </td>
-   <td style="text-align:right;"> 8 </td>
-   <td style="text-align:right;"> 2.09 </td>
-   <td style="text-align:left;"> 0.00114 </td>
+   <td style="text-align:right;"> 0.20 </td>
+   <td style="text-align:left;"> 0.00083 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> GO:0000381 </td>
    <td style="text-align:left;"> regulation of alternative mRNA splicing, via spliceosome </td>
-   <td style="text-align:right;"> 47 </td>
+   <td style="text-align:right;"> 42 </td>
    <td style="text-align:right;"> 5 </td>
-   <td style="text-align:right;"> 0.83 </td>
-   <td style="text-align:left;"> 0.00137 </td>
+   <td style="text-align:right;"> 0.75 </td>
+   <td style="text-align:left;"> 0.00086 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> GO:0045445 </td>
-   <td style="text-align:left;"> myoblast differentiation </td>
-   <td style="text-align:right;"> 71 </td>
-   <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 1.26 </td>
-   <td style="text-align:left;"> 0.00155 </td>
+   <td style="text-align:left;"> GO:0006338 </td>
+   <td style="text-align:left;"> chromatin remodeling </td>
+   <td style="text-align:right;"> 270 </td>
+   <td style="text-align:right;"> 13 </td>
+   <td style="text-align:right;"> 4.82 </td>
+   <td style="text-align:left;"> 0.00108 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> GO:0048813 </td>
    <td style="text-align:left;"> dendrite morphogenesis </td>
-   <td style="text-align:right;"> 97 </td>
+   <td style="text-align:right;"> 95 </td>
    <td style="text-align:right;"> 7 </td>
-   <td style="text-align:right;"> 1.71 </td>
-   <td style="text-align:left;"> 0.00161 </td>
+   <td style="text-align:right;"> 1.70 </td>
+   <td style="text-align:left;"> 0.00152 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> GO:0031047 </td>
-   <td style="text-align:left;"> gene silencing by RNA </td>
-   <td style="text-align:right;"> 99 </td>
-   <td style="text-align:right;"> 7 </td>
-   <td style="text-align:right;"> 1.75 </td>
-   <td style="text-align:left;"> 0.00181 </td>
+   <td style="text-align:left;"> GO:0045445 </td>
+   <td style="text-align:left;"> myoblast differentiation </td>
+   <td style="text-align:right;"> 70 </td>
+   <td style="text-align:right;"> 6 </td>
+   <td style="text-align:right;"> 1.25 </td>
+   <td style="text-align:left;"> 0.00152 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> GO:0031666 </td>
-   <td style="text-align:left;"> positive regulation of lipopolysaccharide-mediated signaling... </td>
-   <td style="text-align:right;"> 4 </td>
-   <td style="text-align:right;"> 2 </td>
-   <td style="text-align:right;"> 0.07 </td>
-   <td style="text-align:left;"> 0.00182 </td>
+   <td style="text-align:left;"> GO:1901888 </td>
+   <td style="text-align:left;"> regulation of cell junction assembly </td>
+   <td style="text-align:right;"> 124 </td>
+   <td style="text-align:right;"> 8 </td>
+   <td style="text-align:right;"> 2.22 </td>
+   <td style="text-align:left;"> 0.00167 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> GO:1901897 </td>
@@ -159,15 +151,23 @@ names(geneList) <- all.genes
    <td style="text-align:right;"> 4 </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 0.07 </td>
-   <td style="text-align:left;"> 0.00182 </td>
+   <td style="text-align:left;"> 0.00186 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> GO:0031666 </td>
+   <td style="text-align:left;"> positive regulation of lipopolysaccharide-mediated signaling... </td>
+   <td style="text-align:right;"> 4 </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 0.07 </td>
+   <td style="text-align:left;"> 0.00186 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> GO:0071320 </td>
    <td style="text-align:left;"> cellular response to cAMP </td>
-   <td style="text-align:right;"> 31 </td>
+   <td style="text-align:right;"> 30 </td>
    <td style="text-align:right;"> 4 </td>
-   <td style="text-align:right;"> 0.55 </td>
-   <td style="text-align:left;"> 0.00204 </td>
+   <td style="text-align:right;"> 0.54 </td>
+   <td style="text-align:left;"> 0.00188 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> GO:0061049 </td>
@@ -175,39 +175,39 @@ names(geneList) <- all.genes
    <td style="text-align:right;"> 15 </td>
    <td style="text-align:right;"> 3 </td>
    <td style="text-align:right;"> 0.27 </td>
-   <td style="text-align:left;"> 0.00211 </td>
+   <td style="text-align:left;"> 0.00218 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> GO:0010595 </td>
    <td style="text-align:left;"> positive regulation of endothelial cell migration </td>
    <td style="text-align:right;"> 76 </td>
    <td style="text-align:right;"> 6 </td>
-   <td style="text-align:right;"> 1.34 </td>
-   <td style="text-align:left;"> 0.00220 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> GO:0051172 </td>
-   <td style="text-align:left;"> negative regulation of nitrogen compound metabolic process </td>
-   <td style="text-align:right;"> 1502 </td>
-   <td style="text-align:right;"> 41 </td>
-   <td style="text-align:right;"> 26.55 </td>
-   <td style="text-align:left;"> 0.00233 </td>
+   <td style="text-align:right;"> 1.36 </td>
+   <td style="text-align:left;"> 0.00232 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> GO:0002063 </td>
    <td style="text-align:left;"> chondrocyte development </td>
    <td style="text-align:right;"> 16 </td>
    <td style="text-align:right;"> 3 </td>
-   <td style="text-align:right;"> 0.28 </td>
-   <td style="text-align:left;"> 0.00257 </td>
+   <td style="text-align:right;"> 0.29 </td>
+   <td style="text-align:left;"> 0.00264 </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> GO:0060485 </td>
-   <td style="text-align:left;"> mesenchyme development </td>
-   <td style="text-align:right;"> 168 </td>
-   <td style="text-align:right;"> 9 </td>
-   <td style="text-align:right;"> 2.97 </td>
-   <td style="text-align:left;"> 0.00292 </td>
+   <td style="text-align:left;"> GO:0045906 </td>
+   <td style="text-align:left;"> negative regulation of vasoconstriction </td>
+   <td style="text-align:right;"> 5 </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 0.09 </td>
+   <td style="text-align:left;"> 0.00306 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> GO:0098909 </td>
+   <td style="text-align:left;"> regulation of cardiac muscle cell action potential involved ... </td>
+   <td style="text-align:right;"> 5 </td>
+   <td style="text-align:right;"> 2 </td>
+   <td style="text-align:right;"> 0.09 </td>
+   <td style="text-align:left;"> 0.00306 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> GO:0048842 </td>
@@ -215,7 +215,7 @@ names(geneList) <- all.genes
    <td style="text-align:right;"> 5 </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 0.09 </td>
-   <td style="text-align:left;"> 0.00300 </td>
+   <td style="text-align:left;"> 0.00306 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> GO:0021785 </td>
@@ -223,7 +223,7 @@ names(geneList) <- all.genes
    <td style="text-align:right;"> 5 </td>
    <td style="text-align:right;"> 2 </td>
    <td style="text-align:right;"> 0.09 </td>
-   <td style="text-align:left;"> 0.00300 </td>
+   <td style="text-align:left;"> 0.00306 </td>
   </tr>
 </tbody>
 </table>
@@ -854,6 +854,18 @@ write.csv(GenTable(GOdata, Fisher = resultFisher), file = "cluster10_GOdata.csv"
 write.csv(out, file = "cluster10_Normal-Colorectal.Cancer_topTable.csv")
 ```
 
+## A note on pseudobulk DE
+
+Pseudobulk differential expression uses count data summed across all cells in each sample (typically within each cell type or cluster).  Unlike cell-level DE, pseudobulk DE *requires biological replicates* so we won't perform it on this dataset.
+
+Once counts are summed, pseudobulk data are analyzed like bulk RNASeq data.
+
+Pseudobulk DE may result in better false discovery rate control than cell-level DE, as shown [here](https://www.nature.com/articles/s41467-021-25960-2).
+
+The Seurat function `AggregateExpression()` can be used to sum counts as described [here](https://satijalab.org/seurat/articles/de_vignette).
+
+A tutorial on using limma for bulk RNASeq is available [here](https://ucdavis-bioinformatics-training.github.io/2023-June-RNA-Seq-Analysis/data_analysis/DE_Analysis_mm_with_quizzes).
+
 ## Prepare for the next section
 
 #### Download Rmd document
@@ -868,72 +880,79 @@ download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training
 sessionInfo()
 ```
 
-```
-## R version 4.2.2 (2022-10-31)
-## Platform: x86_64-apple-darwin17.0 (64-bit)
-## Running under: macOS Big Sur ... 10.16
-## 
-## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRblas.0.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRlapack.dylib
-## 
-## locale:
-## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
-## 
-## attached base packages:
-## [1] stats4    stats     graphics  grDevices utils     datasets  methods  
-## [8] base     
-## 
-## other attached packages:
-##  [1] org.Hs.eg.db_3.16.0  kableExtra_1.3.4     dplyr_1.0.10        
-##  [4] topGO_2.50.0         SparseM_1.81         GO.db_3.16.0        
-##  [7] AnnotationDbi_1.60.0 IRanges_2.32.0       S4Vectors_0.36.0    
-## [10] Biobase_2.58.0       graph_1.76.0         BiocGenerics_0.44.0 
-## [13] limma_3.54.0         SeuratObject_4.1.3   Seurat_4.3.0        
-## 
-## loaded via a namespace (and not attached):
-##   [1] systemfonts_1.0.4      plyr_1.8.8             igraph_1.3.5          
-##   [4] lazyeval_0.2.2         sp_1.5-1               splines_4.2.2         
-##   [7] listenv_0.8.0          scattermore_0.8        GenomeInfoDb_1.34.3   
-##  [10] ggplot2_3.4.0          digest_0.6.30          htmltools_0.5.3       
-##  [13] fansi_1.0.3            magrittr_2.0.3         memoise_2.0.1         
-##  [16] tensor_1.5             cluster_2.1.4          ROCR_1.0-11           
-##  [19] globals_0.16.2         Biostrings_2.66.0      matrixStats_0.63.0    
-##  [22] svglite_2.1.0          spatstat.sparse_3.0-0  colorspace_2.0-3      
-##  [25] rvest_1.0.3            blob_1.2.3             ggrepel_0.9.2         
-##  [28] xfun_0.35              crayon_1.5.2           RCurl_1.98-1.9        
-##  [31] jsonlite_1.8.4         progressr_0.11.0       spatstat.data_3.0-0   
-##  [34] survival_3.4-0         zoo_1.8-11             glue_1.6.2            
-##  [37] polyclip_1.10-4        gtable_0.3.1           zlibbioc_1.44.0       
-##  [40] XVector_0.38.0         webshot_0.5.4          leiden_0.4.3          
-##  [43] future.apply_1.10.0    abind_1.4-5            scales_1.2.1          
-##  [46] DBI_1.1.3              spatstat.random_3.0-1  miniUI_0.1.1.1        
-##  [49] Rcpp_1.0.9             viridisLite_0.4.1      xtable_1.8-4          
-##  [52] reticulate_1.28        bit_4.0.5              htmlwidgets_1.5.4     
-##  [55] httr_1.4.4             RColorBrewer_1.1-3     ellipsis_0.3.2        
-##  [58] ica_1.0-3              pkgconfig_2.0.3        sass_0.4.4            
-##  [61] uwot_0.1.14            deldir_1.0-6           utf8_1.2.2            
-##  [64] tidyselect_1.2.0       rlang_1.0.6            reshape2_1.4.4        
-##  [67] later_1.3.0            munsell_0.5.0          tools_4.2.2           
-##  [70] cachem_1.0.6           cli_3.4.1              generics_0.1.3        
-##  [73] RSQLite_2.2.19         ggridges_0.5.4         evaluate_0.18         
-##  [76] stringr_1.4.1          fastmap_1.1.0          yaml_2.3.6            
-##  [79] goftest_1.2-3          knitr_1.41             bit64_4.0.5           
-##  [82] fitdistrplus_1.1-8     purrr_0.3.5            RANN_2.6.1            
-##  [85] KEGGREST_1.38.0        pbapply_1.6-0          future_1.29.0         
-##  [88] nlme_3.1-160           mime_0.12              xml2_1.3.3            
-##  [91] compiler_4.2.2         rstudioapi_0.14        plotly_4.10.1         
-##  [94] png_0.1-8              spatstat.utils_3.0-1   tibble_3.1.8          
-##  [97] bslib_0.4.1            stringi_1.7.8          highr_0.9             
-## [100] lattice_0.20-45        Matrix_1.5-3           vctrs_0.5.1           
-## [103] pillar_1.8.1           lifecycle_1.0.3        spatstat.geom_3.0-3   
-## [106] lmtest_0.9-40          jquerylib_0.1.4        RcppAnnoy_0.0.20      
-## [109] bitops_1.0-7           data.table_1.14.6      cowplot_1.1.1         
-## [112] irlba_2.3.5.1          httpuv_1.6.6           patchwork_1.1.2       
-## [115] R6_2.5.1               promises_1.2.0.1       KernSmooth_2.23-20    
-## [118] gridExtra_2.3          parallelly_1.32.1      codetools_0.2-18      
-## [121] MASS_7.3-58.1          assertthat_0.2.1       sctransform_0.3.5     
-## [124] GenomeInfoDbData_1.2.9 parallel_4.2.2         grid_4.2.2            
-## [127] tidyr_1.2.1            rmarkdown_2.18         Rtsne_0.16            
-## [130] spatstat.explore_3.0-5 shiny_1.7.3
-```
+<div class='r_output'> R version 4.3.2 (2023-10-31 ucrt)
+ Platform: x86_64-w64-mingw32/x64 (64-bit)
+ Running under: Windows 10 x64 (build 19045)
+ 
+ Matrix products: default
+ 
+ 
+ locale:
+ [1] LC_COLLATE=English_United States.utf8 
+ [2] LC_CTYPE=English_United States.utf8   
+ [3] LC_MONETARY=English_United States.utf8
+ [4] LC_NUMERIC=C                          
+ [5] LC_TIME=English_United States.utf8    
+ 
+ time zone: America/Los_Angeles
+ tzcode source: internal
+ 
+ attached base packages:
+ [1] stats4    stats     graphics  grDevices utils     datasets  methods  
+ [8] base     
+ 
+ other attached packages:
+  [1] org.Hs.eg.db_3.17.0  kableExtra_1.3.4     dplyr_1.1.4         
+  [4] topGO_2.52.0         SparseM_1.81         GO.db_3.17.0        
+  [7] AnnotationDbi_1.62.2 IRanges_2.34.1       S4Vectors_0.38.2    
+ [10] Biobase_2.60.0       graph_1.78.0         BiocGenerics_0.46.0 
+ [13] limma_3.56.2         Seurat_5.0.1         SeuratObject_5.0.1  
+ [16] sp_2.1-2            
+ 
+ loaded via a namespace (and not attached):
+   [1] RColorBrewer_1.1-3      rstudioapi_0.15.0       jsonlite_1.8.8         
+   [4] magrittr_2.0.3          spatstat.utils_3.0-4    rmarkdown_2.25         
+   [7] zlibbioc_1.46.0         vctrs_0.6.5             ROCR_1.0-11            
+  [10] memoise_2.0.1           spatstat.explore_3.2-5  RCurl_1.98-1.13        
+  [13] webshot_0.5.5           htmltools_0.5.7         sass_0.4.8             
+  [16] sctransform_0.4.1       parallelly_1.36.0       KernSmooth_2.23-22     
+  [19] bslib_0.6.1             htmlwidgets_1.6.4       ica_1.0-3              
+  [22] plyr_1.8.9              plotly_4.10.3           zoo_1.8-12             
+  [25] cachem_1.0.8            igraph_1.5.1            mime_0.12              
+  [28] lifecycle_1.0.4         pkgconfig_2.0.3         Matrix_1.6-4           
+  [31] R6_2.5.1                fastmap_1.1.1           GenomeInfoDbData_1.2.10
+  [34] fitdistrplus_1.1-11     future_1.33.0           shiny_1.8.0            
+  [37] digest_0.6.33           colorspace_2.1-0        patchwork_1.1.3        
+  [40] tensor_1.5              RSpectra_0.16-1         irlba_2.3.5.1          
+  [43] RSQLite_2.3.4           progressr_0.14.0        fansi_1.0.6            
+  [46] spatstat.sparse_3.0-3   httr_1.4.7              polyclip_1.10-6        
+  [49] abind_1.4-5             compiler_4.3.2          bit64_4.0.5            
+  [52] DBI_1.1.3               fastDummies_1.7.3       highr_0.10             
+  [55] MASS_7.3-60             tools_4.3.2             lmtest_0.9-40          
+  [58] httpuv_1.6.13           future.apply_1.11.0     goftest_1.2-3          
+  [61] glue_1.6.2              nlme_3.1-164            promises_1.2.1         
+  [64] grid_4.3.2              Rtsne_0.17              cluster_2.1.6          
+  [67] reshape2_1.4.4          generics_0.1.3          gtable_0.3.4           
+  [70] spatstat.data_3.0-3     tidyr_1.3.0             data.table_1.14.10     
+  [73] xml2_1.3.6              XVector_0.40.0          utf8_1.2.4             
+  [76] spatstat.geom_3.2-7     RcppAnnoy_0.0.21        ggrepel_0.9.4          
+  [79] RANN_2.6.1              pillar_1.9.0            stringr_1.5.1          
+  [82] spam_2.10-0             RcppHNSW_0.5.0          later_1.3.2            
+  [85] splines_4.3.2           lattice_0.22-5          bit_4.0.5              
+  [88] survival_3.5-7          deldir_2.0-2            tidyselect_1.2.0       
+  [91] Biostrings_2.68.1       miniUI_0.1.1.1          pbapply_1.7-2          
+  [94] knitr_1.45              gridExtra_2.3           svglite_2.1.3          
+  [97] scattermore_1.2         xfun_0.41               matrixStats_1.1.0      
+ [100] stringi_1.8.2           lazyeval_0.2.2          yaml_2.3.7             
+ [103] evaluate_0.23           codetools_0.2-19        tibble_3.2.1           
+ [106] cli_3.6.1               uwot_0.1.16             systemfonts_1.0.5      
+ [109] xtable_1.8-4            reticulate_1.34.0       munsell_0.5.0          
+ [112] jquerylib_0.1.4         GenomeInfoDb_1.36.4     Rcpp_1.0.11            
+ [115] globals_0.16.2          spatstat.random_3.2-2   png_0.1-8              
+ [118] parallel_4.3.2          ellipsis_0.3.2          blob_1.2.4             
+ [121] ggplot2_3.4.4           dotCall64_1.1-1         bitops_1.0-7           
+ [124] listenv_0.9.0           viridisLite_0.4.2       scales_1.3.0           
+ [127] ggridges_0.5.4          crayon_1.5.2            leiden_0.4.3.1         
+ [130] purrr_1.0.2             rlang_1.1.2             rvest_1.0.3            
+ [133] KEGGREST_1.40.1         cowplot_1.1.1
+</div>

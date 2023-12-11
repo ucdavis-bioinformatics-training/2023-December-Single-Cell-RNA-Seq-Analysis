@@ -461,7 +461,7 @@ gs.list$gs_negative$`Tuft cells` <- NULL
 ### Score cells
 ScType scores every cell, summarizing the transformed and weighted expression of markers for each cell type. This generates a matrix with the dimensions cell types x cells.
 ```{r score_cells}
-es.max <- sctype_score(GetAssayData(experiment.aggregate, "scale"),
+es.max <- sctype_score(GetAssayData(experiment.aggregate, layer = "scale"),
                        scaled = TRUE,
                        gs = gs.list$gs_positive,
                        gs2 = gs.list$gs_negative)
