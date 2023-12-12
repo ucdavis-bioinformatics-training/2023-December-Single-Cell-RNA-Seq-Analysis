@@ -255,8 +255,8 @@ In Rstudio, navigate to the terminal tab (next to the console). This gives you a
 
 ```bash
 
-scp username@tadpole.genomecenter.ucdavis.edu:/share/workshop/scRNA_workshop/cellranger_outs/expression_data_cellranger.tar.gz ./
-tar -xzf expression_data_cellranger.tar.gz
+scp username@tadpole.genomecenter.ucdavis.edu:/share/workshop/scRNA_workshop/cellranger_outs/expression_data_cellranger.zip ./
+unzip expression_data_cellranger.zip
 ```
 
 **Some Windows users may need to use Filezilla/WinSCP to download the file instead.**
