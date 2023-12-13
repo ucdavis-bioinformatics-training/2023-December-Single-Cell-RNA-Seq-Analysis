@@ -65,7 +65,7 @@ The optimal value of pK varies between samples, and is impacted by the number of
 
 ```r
 pK <- lapply(experiment.split, function(sce){
-  sweep.res = paramSweep_v3(sce, PCs = 1:50, sct = FALSE)
+  sweep.res = paramSweep(sce, PCs = 1:50, sct = FALSE)
   sweep.stats = summarizeSweep(sweep.res, GT = FALSE)
   BCmvn = find.pK(sweep.stats)
   as.numeric(BCmvn$pK[which(BCmvn$BCmetric == max(BCmvn$BCmetric))])

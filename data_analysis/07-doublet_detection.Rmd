@@ -64,7 +64,7 @@ We will use PCs 1-50 (based on the dimensionality reduction section) and the def
 The optimal value of pK varies between samples, and is impacted by the number of cell states and magnitude of transcriptional heterogeneity present in the data. The mean-variance normalized bimodality coefficient (BCmvn) is used as a measure of pK optimization. In experiments with known doublet frequencies, BCmvn is maximized by values of pK that produce the most accurate doublet-calling. In the code below, the pK value corresponding to the maxiumum BCmvn is selected for each sample.
 ```{r pK_select, results=FALSE}
 pK <- lapply(experiment.split, function(sce){
-  sweep.res = paramSweep_v3(sce, PCs = 1:50, sct = FALSE)
+  sweep.res = paramSweep(sce, PCs = 1:50, sct = FALSE)
   sweep.stats = summarizeSweep(sweep.res, GT = FALSE)
   BCmvn = find.pK(sweep.stats)
   as.numeric(BCmvn$pK[which(BCmvn$BCmetric == max(BCmvn$BCmetric))])
@@ -162,7 +162,7 @@ saveRDS(experiment.aggregate, file = "scRNA_workshop-07.rds")
 ```
 
 #### Download Rmd document
-```{r download_Rmd, eval=TRUE}
+```{r download_Rmd, eval=FALSE}
 download.file("https://raw.githubusercontent.com/ucdavis-bioinformatics-training/2023-December-Single-Cell-RNA-Seq-Analysis/main/data_analysis/08-integration.Rmd", "08-integration.Rmd")
 ```
 
